@@ -5,7 +5,7 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.dirname(os.path.dirname(HERE))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.dirname(HERE))  # tools/validate (check_degrade)
 

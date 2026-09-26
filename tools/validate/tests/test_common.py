@@ -86,7 +86,7 @@ class TestValidateCommon(unittest.TestCase):
 
     def test_load_book_ru_ch01(self):
         text = vcommon.load_book(ROOT, 1, "ru")
-        self.assertIn("Не умирайте рано", text[:400])  # chapter title in header zone
+        self.assertIn("Как не умереть раньше времени", text[:500])
         self.assertGreater(len(text), 500)
 
     def test_unit_sha256_reexport(self):

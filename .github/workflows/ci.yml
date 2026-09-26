@@ -1,6 +1,5 @@
-name: pytest
-# pytest-тесты пайплайна (30 тестов). Основной CI (links, content, verify,
-# unittest) — в check-links.yml как "ci".
+name: test
+# Unit + integration tests for the translation pipeline.
 
 on:
   push:
@@ -20,11 +19,24 @@ jobs:
         run: pip install -r requirements-dev.txt
       - name: Generate digest fixtures
         run: python3 tools/make_digest.py 01
-      - name: Run tests
+      - name: Run unit tests
         run: >
           python3 -m pytest tools/validate/tests/ tools/llm/tests/ -v
-          --ignore=tools/validate/tests/test_build_lite3.py
-          --ignore=tools/validate/tests/test_golden_pairs.py
-          --ignore=tools/validate/tests/test_mutation_spec.py
-          --ignore=tools/validate/tests/test_style_check.py
-          -k "not test_load_book_ru_ch01"
+          --ignore=tools/validate/tests/integration
+      - name: Run integration tests
+        run: python3 -m pytest tools/validate/tests/integration/ -v
+      - name: Lint
+        run: ruff check tools/ --select E,F --ignore E501
+      - name: Link check
+        run: python3 tools/check_links.py
+      - name: Readability gate
+        run: python3 tools/readability.py ru --strict
+      - name: Bureaucratese gate
+        run: python3 tools/bureaucratese.py ru --strict
+      - name: Check for committed bytecode
+        run: |
+          if git ls-files '**/__pycache__/*' | grep -q .; then
+            echo "ERROR: .pyc files committed to git"
+            git ls-files '**/__pycache__/*'
+            exit 1
+          fi

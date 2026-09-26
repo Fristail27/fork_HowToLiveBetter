@@ -137,7 +137,7 @@ class TestStyleCheck(unittest.TestCase):
         self.assertTrue(sc.load_markers("ru", root=ROOT))
         # engine must fail loudly for unknown language (config-driven)
         with self.assertRaises(ValueError):
-            sc.load_markers("es", root=ROOT)
+            sc.load_markers("zz", root=ROOT)
 
     def test_glossary_plain_only_flags_bangladesh_calque(self):
         from tools.style_check import check_text
@@ -212,7 +212,7 @@ class TestCliAlwaysZero(unittest.TestCase):
                  path, "--lang", "es", "--plain-only"],
                 capture_output=True, text=True, cwd=ROOT)
             self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
-            self.assertIn("skip", proc.stdout.lower())
+            self.assertIn("0 warnings", proc.stdout.lower())
             self.assertNotIn("Traceback", proc.stderr)
         finally:
             os.unlink(path)

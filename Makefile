@@ -1,31 +1,28 @@
 # HowToLiveBetter translation pipeline
 # All commands run from repo root.
 
-.PHONY: help sync-upstream digest assemble verify verify-all wave status lint test ci
+.PHONY: help sync-upstream digest assemble verify verify-all wave status lint test test-integration ci
 
 check-content:  ## CJK-leak, parity, readme-badge checks
 	python3 tools/check_content.py
 
 ci:  ## Full local CI: test + lint + links + content + readability + bureaucratese + build
 	@echo "=== Running tests ==="
-	python3 -m pytest tools/validate/tests/ tools/llm/tests/ -v \
-		--ignore=tools/validate/tests/test_build_lite3.py \
-		--ignore=tools/validate/tests/test_golden_pairs.py \
-		--ignore=tools/validate/tests/test_mutation_spec.py \
-		--ignore=tools/validate/tests/test_style_check.py \
-		-k "not test_load_book_ru_ch01"
+	python3 -m pytest tools/validate/tests/ tools/llm/tests/ -v --ignore=tools/validate/tests/integration
+	@echo "=== Integration tests ==="
+	python3 -m pytest tools/validate/tests/integration/ -v
 	@echo "=== Lint ==="
-	ruff check tools/ --select E,F --ignore E501 || echo "→ ruff not installed"
+	ruff check tools/ --select E,F --ignore E501
 	@echo "=== Links ==="
 	python3 tools/check_links.py
 	@echo "=== Content ==="
 	python3 tools/check_content.py
 	@echo "=== Readability ==="
-	python3 tools/readability.py ru
+	python3 tools/readability.py ru --strict
 	@echo "=== Bureaucratese ==="
-	python3 tools/bureaucratese.py ru
+	python3 tools/bureaucratese.py ru --strict
 	@echo "=== Build pages ==="
-	python3 tools/build_pages.py || echo "→ build_pages skipped (bootstrap placeholder)"
+	python3 tools/build_pages.py
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -66,7 +63,7 @@ verify-all:  ## Verify all chapters for a language. Usage: make verify-all LANG=
 	@[ -n "$(LANG)" ] || (echo "Usage: make verify-all LANG=ru|en|es" && exit 1)
 	@for ch in $$(ls book/$(LANG)/ | grep -oE '^[0-9]+' | sort -n | uniq); do \
 		echo "=== Chapter $$ch ($(LANG)) ==="; \
-		python3 tools/verify.py $$ch --lang $(LANG) --json || true; \
+		python3 tools/verify.py $$ch --lang $(LANG) --json; \
 	done
 
 # ── Wave pipeline ───────────────────────────────────────────────
@@ -83,16 +80,19 @@ status:  ## Show translation dashboard
 
 # ── Web ────────────────────────────────────────────────────────
 
-web-build:  ## Regenerate per-language and v1/v2 pages
+web-build:  ## Regenerate per-language pages
 	python3 tools/build_pages.py
 
 # ── Quality ────────────────────────────────────────────────────
 
 lint:  ## Lint Python tools
-	ruff check tools/ --select E,F --ignore E501 2>/dev/null || echo "→ ruff not installed"
+	ruff check tools/ --select E,F --ignore E501
 
-test:  ## Run all tests
-	cd tools/validate && python3 -m pytest tests/ -v
+test:  ## Run unit tests (excludes integration)
+	python3 -m pytest tools/validate/tests/ tools/llm/tests/ -v --ignore=tools/validate/tests/integration
+
+test-integration:  ## Run integration tests (golden manifests, E2E)
+	python3 -m pytest tools/validate/tests/integration/ -v
 
 factcheck:  ## Semantic fact-check against CN source. Usage: make factcheck CH=10 LANG=ru
 	@[ -n "$(CH)" ] && [ -n "$(LANG)" ] || (echo "Usage: make factcheck CH=NN LANG=ru|en|es" && exit 1)

@@ -14,6 +14,7 @@ n, work, out = sys.argv[1], sys.argv[2], sys.argv[3]
 lang = sys.argv[4] if len(sys.argv) > 4 else "ru"
 
 SOURCE_LABELS = {"ru": "Источники", "en": "Sources", "es": "Fuentes"}
+EVIDENCE_GRADE_LABELS = {"ru": "Уровень доказательности", "en": "Evidence grade", "es": "Nivel de evidencia"}
 
 meta = json.load(open(os.path.join(root, "tools", "digest", n, "blocks.json"),
                       encoding="utf-8"))
@@ -41,10 +42,11 @@ for i in range(1, meta["items"] + 1):
     out_lines, inserted = [], False
     for j, l in enumerate(lines):
         if l.strip() == "§SRC§":
-            # find where to insert: after the LAST '- Уровень доказательности'
-            # already emitted, before a following '- Примечания' if present
+            # find where to insert: after the LAST evidence-grade line
+            # already emitted, before a following notes line if present
             k = len(out_lines)
-            while k > 0 and not out_lines[k-1].startswith("- Уровень доказательности"):
+            grade_label = f"- {EVIDENCE_GRADE_LABELS[lang]}"
+            while k > 0 and not out_lines[k-1].startswith(grade_label):
                 k -= 1
             if k == 0:
                 out_lines.extend(src_ru)
