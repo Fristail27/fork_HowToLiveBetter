@@ -97,7 +97,6 @@ class TestManifestBookConsistency(unittest.TestCase):
 
     def test_variant_a_lives_in_its_chapter(self):
         m = load_manifest()
-        import os
         for p in m["pairs"]:
             nn, lang = p["chapter"], p["lang"]
             book = gp.read_chapter(ROOT, nn, lang)

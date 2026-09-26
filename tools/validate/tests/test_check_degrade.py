@@ -1,5 +1,4 @@
 """Tests for check_degrade validation gates."""
-import importlib.util
 import os
 import sys
 import unittest

@@ -36,7 +36,7 @@ class VerifyJson(unittest.TestCase):
         # rfind("{") alone would land inside the object, so parse by line.
         text = r.stdout
         js_line = next(
-            (l for l in reversed(text.splitlines()) if l.startswith("{")),
+            (ln for ln in reversed(text.splitlines()) if ln.startswith("{")),
             None,
         )
         self.assertIsNotNone(js_line, text[:500])
@@ -82,7 +82,7 @@ class VerifyJson(unittest.TestCase):
             )
             self.assertIn("no banned_calques configured", r.stderr)
             js_line = next(
-                (l for l in reversed(r.stdout.splitlines()) if l.startswith("{")),
+                (ln for ln in reversed(r.stdout.splitlines()) if ln.startswith("{")),
                 None,
             )
             self.assertIsNotNone(js_line, r.stdout[:500])

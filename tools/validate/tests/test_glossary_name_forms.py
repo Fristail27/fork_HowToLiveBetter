@@ -1,4 +1,6 @@
-import json, os, unittest
+import json
+import os
+import unittest
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 GLOSS = os.path.join(REPO, "tools", "glossary.json")
 

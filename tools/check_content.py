@@ -27,7 +27,6 @@ import json
 import os
 import re
 import sys
-import urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CJK = re.compile(r'[\u4e00-\u9fff]')
@@ -245,7 +244,7 @@ def main():
     gate_empty_fields(issues)
     gate_parity(issues)
     gate_stats(issues)
-    print(f"content gates: filenames, cjk-leaks, empty-fields, parity, stats")
+    print("content gates: filenames, cjk-leaks, empty-fields, parity, stats")
     if issues:
         print(f"VIOLATIONS: {len(issues)}")
         for i in issues:

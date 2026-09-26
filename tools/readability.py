@@ -12,7 +12,6 @@ import json
 import os
 import re
 import sys
-import unicodedata
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -256,7 +255,7 @@ def main():
     total_words = sum(r["words"] for r in results)
     print("-" * 75)
     print(f"{'AVERAGE':<40} {avg_score:>6.1f} {total_words:>6}")
-    print(f"\nTarget: score ≥ 60 (легко / easy / fácil) for native speaker clarity.")
+    print("\nTarget: score ≥ 60 (легко / easy / fácil) for native speaker clarity.")
 
     below = [r for r in results if r["score"] < 60]
     if below:

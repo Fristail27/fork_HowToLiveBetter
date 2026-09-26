@@ -11,7 +11,6 @@ import json
 import os
 import re
 import sys
-from collections import OrderedDict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

@@ -2,7 +2,6 @@
 
 Run: cd ~/github/HowToLiveBetter && python3 -m unittest tools.validate.tests.test_common -v
 """
-import json
 import os
 import sys
 import tempfile

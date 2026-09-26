@@ -417,7 +417,7 @@ class BannedCalque(unittest.TestCase):
                  "01", "--lang", "ru", "--file", p, "--json"],
                 cwd=_ROOT, capture_output=True, text=True,
             )
-        js = next((l for l in reversed(r.stdout.splitlines()) if l.startswith("{")), None)
+        js = next((ln for ln in reversed(r.stdout.splitlines()) if ln.startswith("{")), None)
         self.assertIsNotNone(js, r.stdout + r.stderr)
         return json.loads(js)
 
@@ -463,7 +463,7 @@ class CJKOutside(unittest.TestCase):
                  "01", "--lang", lang, "--file", p, "--json"],
                 cwd=_ROOT, capture_output=True, text=True,
             )
-        js = next((l for l in reversed(r.stdout.splitlines()) if l.startswith("{")), None)
+        js = next((ln for ln in reversed(r.stdout.splitlines()) if ln.startswith("{")), None)
         self.assertIsNotNone(js, r.stdout + r.stderr)
         return json.loads(js)
 
@@ -537,7 +537,7 @@ class FieldChecks(unittest.TestCase):
                  "01", "--lang", "ru", "--file", p, "--json"],
                 cwd=_ROOT, capture_output=True, text=True,
             )
-        js = next((l for l in reversed(r.stdout.splitlines()) if l.startswith("{")), None)
+        js = next((ln for ln in reversed(r.stdout.splitlines()) if ln.startswith("{")), None)
         self.assertIsNotNone(js, r.stdout + r.stderr)
         return json.loads(js)
 

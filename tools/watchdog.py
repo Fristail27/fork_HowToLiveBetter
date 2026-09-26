@@ -8,7 +8,10 @@ Exit codes: 0 = healthy (progress < STALL_MIN), 1 = stalled, 2 = dead/incomplete
 
 Usage: python3 tools/watchdog.py <run-dir> [--stall-min 25]
 """
-import os, sys, time, json
+import os
+import sys
+import time
+import json
 
 run = sys.argv[1]
 stall_min = 25

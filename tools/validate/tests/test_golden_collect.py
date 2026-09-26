@@ -4,7 +4,6 @@ The collector maps judge answers (1/2/=) through the manifest's show_order
 mapping: it must say whether the judge picked the ORIGINAL (variant_a) —
 without ever leaking that mapping into output files consumed by humans.
 """
-import json
 import os
 import sys
 import unittest

@@ -13,7 +13,6 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from tools.validate import golden_merge as gm  # noqa: E402
 
 MANIFEST = os.path.join(ROOT, "tools", "validate", "results", "golden_manifest.json")
 

@@ -3,7 +3,6 @@
 Pure-math module (no I/O beyond verdict JSON loading).
 """
 import json
-import math
 import os
 import sys
 import unittest
@@ -23,7 +22,6 @@ class TestKappa(unittest.TestCase):
     def test_chance_agreement_zero(self):
         # exactly chance-level agreement -> kappa ~ 0
         a = [1, 0, 1, 0, 1, 0, 1, 0]
-        b = [1, 0, 1, 0, 1, 0, 1, 0]  # perfect would be 1; construct chance:
         b2 = [1, 1, 0, 0, 1, 1, 0, 0]  # agree 4/8 = p_e for balanced marginals
         k = jm.cohens_kappa(a, b2)
         self.assertAlmostEqual(k, 0.0, places=6)

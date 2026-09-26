@@ -11,7 +11,10 @@ I18N prose stays in index.html; every langs.json code must have an I18N.{code}:{
 
 Run from repo root:  python3 tools/build_pages.py
 """
-import json, os, re, sys
+import json
+import os
+import re
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LANGS_PATH = os.path.join(ROOT, 'tools', 'langs.json')

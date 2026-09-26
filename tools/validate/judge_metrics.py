@@ -36,8 +36,8 @@ def cohens_kappa(a, b):
         raise ValueError("empty lists")
     po = sum(1 for x, y in zip(a, b) if x == y) / n
     levels = set(a) | set(b)
-    pe = sum((sum(1 for x in a if x == l) / n) * (sum(1 for y in b if y == l) / n)
-             for l in levels)
+    pe = sum((sum(1 for x in a if x == ln) / n) * (sum(1 for y in b if y == ln) / n)
+             for ln in levels)
     if pe == 1.0:
         return None  # undefined: unanimous marginals (prevalence paradox)
     return (po - pe) / (1 - pe)

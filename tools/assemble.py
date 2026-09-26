@@ -3,11 +3,14 @@
 then run the full integrity check against the original.
 
 Usage:
-  python3 tools/assemble.py <NN> <workdir> <out.md>
-  # workdir contains units/NN.md overwritten by the translator (same filenames)
+  python3 tools/assemble.py <NN> <workdir> <out.md> [lang]
+  lang defaults to "ru" if omitted.
 Exits non-zero and prints FAIL lines if anything is off.
 """
-import json, os, re, sys
+import json
+import os
+import re
+import sys
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 n, work, out = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -20,55 +23,54 @@ meta = json.load(open(os.path.join(root, "tools", "digest", n, "blocks.json"),
                       encoding="utf-8"))
 fails = []
 
-parts = [l.rstrip() for l in open(os.path.join(work, "units", "00.md"),
-                                  encoding="utf-8").read().splitlines()]
+parts = [
+    ln.rstrip() for ln in open(
+        os.path.join(work, "units", "00.md"), encoding="utf-8",
+    ).read().splitlines()
+]
 for i in range(1, meta["items"] + 1):
     up = os.path.join(work, "units", f"{i:02d}.md")
     if not os.path.exists(up):
-        fails.append(f"unit {i:02d} missing"); continue
+        fails.append(f"unit {i:02d} missing")
+        continue
     txt = open(up, encoding="utf-8").read()
     tag = meta["blocks"][str(i)]["tag"]
     src = meta["blocks"][str(i)]["src"]
     txt = txt.replace("§TAG§", tag)
-    # Russian label + byte-identical content after the label
-    src_ru = ["- " + SOURCE_LABELS[lang] + ":" + l.split("：", 1)[1]
-              if l.startswith("- 来源：") else l
-              for l in src]
-    # In the original, 来源 sits between 证据等级 and 备注 in most items;
-    # splice each source line in at the position of its §SRC§ marker only if
-    # the marker is the LAST content line; otherwise re-splice to match the
-    # original field order (sources right after the grade line, before notes).
+    src_local = [
+        "- " + SOURCE_LABELS[lang] + ":" + ln.split("：", 1)[1]
+        if ln.startswith("- 来源：") else ln
+        for ln in src
+    ]
     lines = txt.splitlines()
     out_lines, inserted = [], False
-    for j, l in enumerate(lines):
-        if l.strip() == "§SRC§":
-            # find where to insert: after the LAST evidence-grade line
-            # already emitted, before a following notes line if present
-            k = len(out_lines)
+    for _j, ln in enumerate(lines):
+        if ln.strip() == "§SRC§":
             grade_label = f"- {EVIDENCE_GRADE_LABELS[lang]}"
-            while k > 0 and not out_lines[k-1].startswith(grade_label):
+            k = len(out_lines)
+            while k > 0 and not out_lines[k - 1].startswith(grade_label):
                 k -= 1
             if k == 0:
-                out_lines.extend(src_ru)
+                out_lines.extend(src_local)
             else:
                 rest, note = out_lines[:k], out_lines[k:]
-                out_lines = rest + src_ru + note
+                out_lines = rest + src_local + note
             inserted = True
         else:
-            out_lines.append(l)
+            out_lines.append(ln)
     if not inserted:
         fails.append(f"unit {i:02d}: §SRC§ marker not found")
     txt = "\n".join(out_lines)
     if "§" in txt:
         fails.append(f"unit {i:02d}: leftover placeholder")
     parts.extend(txt.rstrip().splitlines())
-    # separator: blank line between items exactly where the original has one
     blank = meta.get("blank_before_next", {}).get(str(i), True)
     if i < meta["items"] and blank:
         parts.append("")
 
 open(out, "w", encoding="utf-8").write(
-    ("\n".join(parts).rstrip() + "\n").replace("\n\n\n", "\n\n"))
+    ("\n".join(parts).rstrip() + "\n").replace("\n\n\n", "\n\n"),
+)
 
 # ---- integrity checks against the original -------------------------------
 src = [f for f in os.listdir(os.path.join(root, "book"))
@@ -82,7 +84,11 @@ if len(si) != len(ti):
     fails.append(f"items {len(si)} != {len(ti)}")
 
 ss = [x.split("：", 1)[1] for x in sl if x.startswith("- 来源：")]
-ts = [x.split(":", 1)[1].strip() for x in tl if re.match(r"^- " + SOURCE_LABELS[lang] + ":", x)]
+ts = [
+    x.split(":", 1)[1].strip()
+    for x in tl
+    if re.match(r"^- " + SOURCE_LABELS[lang] + ":", x)
+]
 if len(ss) != len(ts):
     fails.append(f"sources {len(ss)} != {len(ts)}")
 else:
@@ -95,18 +101,28 @@ tt = sum(1 for x in tl if "成本标签" in x)
 if st != tt:
     fails.append(f"tags {st} != {tt}")
 
-# hanzi allowed only: sources lines, tag lines, status-line link, and any line
-# still in the ORIGINAL language (the test path: untranslated units).
-# For a real translated chapter the translator-subagent contract says hanzi
-# outside these zones = 0; assemble only enforces the mechanical zones.
-def hanzi(s): return re.search(r"[\u4e00-\u9fff]", s)
+
+def hanzi(s: str) -> bool:
+    return bool(re.search(r"[\u4e00-\u9fff]", s))
+
+
 zh_lines_out = 0
-for idx, l in enumerate(tl, 1):
-    if hanzi(l) and not (l.startswith("- " + SOURCE_LABELS[lang] + ":") or "成本标签" in l
-                         or "](../" in l or idx <= 4):
+for idx, ln in enumerate(tl, 1):
+    if hanzi(ln) and not (
+        ln.startswith("- " + SOURCE_LABELS[lang] + ":")
+        or "成本标签" in ln
+        or "](../" in ln
+        or idx <= 4
+    ):
         zh_lines_out += 1
 
 if fails:
-    print("FAIL"); [print(" -", f) for f in fails]; sys.exit(1)
+    print("FAIL")
+    for f in fails:
+        print(" -", f)
+    sys.exit(1)
 note = "" if zh_lines_out == 0 else f" (warning: {zh_lines_out} untranslated lines)"
-print(f"OK ch.{n}: items={len(ti)} tags={tt} sources={len(ts)} byte-identical{note}")
+print(
+    f"OK ch.{n}: items={len(ti)} tags={tt}"
+    f" sources={len(ts)} byte-identical{note}",
+)

@@ -10,8 +10,8 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from tools.llm import client
-from tools.llm.translate_unit import (
+from tools.llm import client  # noqa: E402
+from tools.llm.translate_unit import (  # noqa: E402
     out_dir_is_under_digest,
     refuse_digest_outdir,
 )

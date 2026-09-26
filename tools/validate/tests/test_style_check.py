@@ -3,7 +3,6 @@
 Marker data lives in tools/rules/<lang>.json (style_markers + whitelist_zones);
 the engine (tools/style_check.py) is language-agnostic.
 """
-import json
 import os
 import sys
 import unittest
@@ -114,9 +113,9 @@ class TestStyleCheck(unittest.TestCase):
         warns = self._warns(BUREAUCRATESE)
         self.assertGreaterEqual(len(warns), 3)
         labels = {w["label"] for w in warns}
-        self.assertTrue(any("осуществля" in l for l in labels))
-        self.assertTrue(any("данн" in l for l in labels))
-        self.assertTrue(any("является" in l for l in labels))
+        self.assertTrue(any("осуществля" in ln for ln in labels))
+        self.assertTrue(any("данн" in ln for ln in labels))
+        self.assertTrue(any("является" in ln for ln in labels))
 
     def test_cap_per_category(self):
         warns = self._warns(BUREAUCRATESE)
@@ -146,7 +145,7 @@ class TestStyleCheck(unittest.TestCase):
         self.assertIn("Бангладеш", spans)
         labels = {w["label"] for w in warns}
         self.assertIn("name_form:Бангладеш", labels)
-        self.assertFalse(any(l.startswith("calque:в Бангладеш") for l in labels))
+        self.assertFalse(any(ln.startswith("calque:в Бангладеш") for ln in labels))
 
     def test_bangladesh_correct_prep_plain_only_no_false_positive(self):
         from tools.style_check import check_text
@@ -171,7 +170,8 @@ class TestStyleCheck(unittest.TestCase):
 
 class TestCliAlwaysZero(unittest.TestCase):
     def test_cli_plain_only_warns_bangladesh(self):
-        import subprocess, tempfile
+        import subprocess
+        import tempfile
         fd, path = tempfile.mkstemp(suffix=".md")
         with os.fdopen(fd, "w") as f:
             f.write(BANGLADESH_PLAIN)
@@ -187,7 +187,8 @@ class TestCliAlwaysZero(unittest.TestCase):
             os.unlink(path)
 
     def test_cli_exit_zero_even_with_warnings(self):
-        import subprocess, tempfile
+        import subprocess
+        import tempfile
         fd, path = tempfile.mkstemp(suffix=".md")
         with os.fdopen(fd, "w") as f:
             f.write(BUREAUCRATESE)
@@ -202,7 +203,8 @@ class TestCliAlwaysZero(unittest.TestCase):
             os.unlink(path)
 
     def test_cli_es_missing_pack_soft_skips(self):
-        import subprocess, tempfile
+        import subprocess
+        import tempfile
         fd, path = tempfile.mkstemp(suffix=".md")
         with os.fdopen(fd, "w") as f:
             f.write("- En términos sencillos: hola.\n")

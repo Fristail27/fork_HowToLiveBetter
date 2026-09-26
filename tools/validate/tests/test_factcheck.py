@@ -320,7 +320,6 @@ class TestLiveJudgeWiring(unittest.TestCase):
         self.assertNotIn("- 来源：", prompt.split("## CHINESE SOURCE", 1)[-1].split("## TRANSLATION")[0])
 
     def test_live_judge_mocked_writes_and_exits_0(self):
-        import subprocess
         import tempfile
         from unittest import mock
 

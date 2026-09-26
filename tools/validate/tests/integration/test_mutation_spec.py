@@ -5,7 +5,6 @@ results/mutations_seed42.json); these tests validate spec + plumbing offline.
 """
 import json
 import os
-import subprocess
 import sys
 import unittest
 

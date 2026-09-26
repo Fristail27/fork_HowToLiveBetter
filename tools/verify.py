@@ -27,7 +27,13 @@ Checks (fail = exit 1, warn = printed only):
 
 On success writes tools/.status/<NN>-<lang>.ok (mtime-stamped) for status.py.
 """
-import argparse, glob, json, os, re, sys, time
+import argparse
+import glob
+import json
+import os
+import re
+import sys
+import time
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -285,7 +291,7 @@ def _ru_tens_scale(raw):
 _RU_UNITS = {"один": 1, "одна": 1, "одно": 1, "два": 2, "две": 2, "три": 3,
              "четыре": 4, "пять": 5, "шесть": 6, "семь": 7, "восемь": 8,
              "девять": 9, "десять": 10, "одиннадцать": 11, "двенадцать": 12,
-             "тринадцать": 13, "четырнадцать": 14, "четырнадцать": 14,
+             "тринадцать": 13, "четырнадцать": 14,
              "пятнадцать": 15, "шестнадцать": 16, "семнадцать": 17,
              "восемнадцать": 18, "девятнадцать": 19}
 
@@ -413,7 +419,7 @@ def norm_numbers(text, ru=False, es=False):
         first, mid, scale = m.group(1), m.group(2), m.group(3)
         second = re.search(r"\d+(?:\.\d+)?", mid).group(0)
         key = scale.lower().rstrip(".")
-        factor = {"тыс": 1e3, "тысяч": 1e3, "млн": 1e6, "миллион": 1e6,
+        _scale_map = {"тыс": 1e3, "тысяч": 1e3, "млн": 1e6, "миллион": 1e6,
                   "млрд": 1e9, "миллиард": 1e9, "трлн": 1e12, "триллион": 1e12,
                   "thousand": 1e3, "million": 1e6, "billion": 1e9,
                   "trillion": 1e12, "mil": 1e3}.get(key, 1)
@@ -504,9 +510,9 @@ def main():
     src_labels = ("- 来源：", "- Sources:", "- Fuentes:", "- Источники:")
 
     def body(lines, src_label):
-        return [l for l in lines
-                if not any(l.startswith(s) for s in src_labels)
-                and "成本标签" not in l]
+        return [ln for ln in lines
+                if not any(ln.startswith(s) for s in src_labels)
+                and "成本标签" not in ln]
 
     fails, warns = [], []
     fail_objs, warn_objs = [], []
@@ -595,9 +601,9 @@ def main():
 
     # 4.5 plain-terms lines must stay jargon-free (CLAUDE.md: 说人话 bans HR/RR/OR/CI)
     plain = labels[lang][1]
-    for idx, l in enumerate(tl, 1):
-        if l.lstrip().startswith("- " + plain):
-            hits = re.findall(r"\b(?:HR|RR|OR|CI)\b", l)
+    for idx, ln in enumerate(tl, 1):
+        if ln.lstrip().startswith("- " + plain):
+            hits = re.findall(r"\b(?:HR|RR|OR|CI)\b", ln)
             if hits:
                 add_warn(
                     f"line {idx}: jargon in '{plain}' line: {', '.join(sorted(set(hits)))}",
@@ -646,23 +652,23 @@ def main():
     # 6. CJK / fullwidth outside allowed zones ---------------------------------
     zh_lines = []
     in_note = False
-    for idx, l in enumerate(tl, 1):
+    for idx, ln in enumerate(tl, 1):
         # translator's note block (TRANSLATION.md insertion convention) is allowed
         # to mention CJK terms — track the whole "> …" block after its marker
-        if l.startswith("> Примечание переводчика") or l.startswith("> Translator's note") or l.startswith("> Nota del traductor"):
+        if ln.startswith("> Примечание переводчика") or ln.startswith("> Translator's note") or ln.startswith("> Nota del traductor"):
             in_note = True
-        elif not l.startswith(">"):
+        elif not ln.startswith(">"):
             in_note = False
-        if idx <= 4 or in_note or l.startswith(SRC_LABEL[lang]) or "成本标签" in l:
+        if idx <= 4 or in_note or ln.startswith(SRC_LABEL[lang]) or "成本标签" in ln:
             continue
-        s = re.sub(r"\[[^\]]*\]\([^)]*\)", "[]( )", l)           # whole md links (paths may be CJK)
+        s = re.sub(r"\[[^\]]*\]\([^)]*\)", "[]( )", ln)           # whole md links (paths may be CJK)
         s = re.sub(r"\([^)]*[\u4e00-\u9fff][^)]*\)", "(gloss)", s)  # paren glosses
         s = re.sub(r"[«\"「][^»\"」]*[»\"」]", "«»", s)           # quoted spans (contract chars)
         if CJK.search(s):
-            zh_lines.append((idx, l.strip()[:70]))
+            zh_lines.append((idx, ln.strip()[:70]))
         elif FULLWIDTH.search(s):
             add_warn(
-                f"line {idx}: fullwidth punctuation: {l.strip()[:60]}",
+                f"line {idx}: fullwidth punctuation: {ln.strip()[:60]}",
                 {"kind": "fullwidth", "line": idx},
             )
     if zh_lines:

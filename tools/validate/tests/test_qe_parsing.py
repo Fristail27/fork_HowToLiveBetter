@@ -3,7 +3,6 @@
 The COMET stack only runs on the Mac (venv ~/.venvs/qe); everything tested
 here is offline-pure: parsing fixed output samples and threshold math.
 """
-import json
 import os
 import sys
 import unittest

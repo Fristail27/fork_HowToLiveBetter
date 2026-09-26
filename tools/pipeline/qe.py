@@ -8,7 +8,6 @@ SKIPPED status instead of failing the pipeline (pass B is advisory-only).
 import json
 import os
 import re
-import shutil
 import subprocess
 
 from . import config as _config

@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 import os
-import re
 import subprocess
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SCRIPTS = {"ru": "assemble.py", "en": "assemble_en.py", "es": "assemble_es.py"}
+SCRIPTS = {"ru": "assemble.py", "en": "assemble.py", "es": "assemble.py"}
 RUNS_ACTIVE = os.path.join(REPO, "tools", "runs", "active")
 
 
@@ -32,7 +31,7 @@ def main(chapters):
                 fails += 1
                 continue
             r = subprocess.run(
-                ["python3", f"tools/{SCRIPTS[lang]}", nn, wd, out],
+                ["python3", f"tools/{SCRIPTS[lang]}", nn, wd, out, lang],
                 cwd=REPO,
                 capture_output=True,
                 text=True,
@@ -56,9 +55,9 @@ def main(chapters):
                 capture_output=True,
                 text=True,
             )
-            ok = any(l.startswith("OK") for l in v.stdout.splitlines())
+            ok = any(ln.startswith("OK") for ln in v.stdout.splitlines())
             detail = next(
-                (l for l in v.stdout.splitlines() if l.startswith(("OK", "FAIL"))),
+                (ln for ln in v.stdout.splitlines() if ln.startswith(("OK", "FAIL"))),
                 "",
             )[:60]
             rows.append((lang, nn, detail))

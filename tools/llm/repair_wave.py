@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -49,12 +48,7 @@ def _run(cmd: list, **kw) -> subprocess.CompletedProcess:
 
 
 def assemble_cmd(nn: str, lang: str, workdir: Path, assembled: Path) -> list:
-    script = {
-        "ru": "tools/assemble.py",
-        "en": "tools/assemble_en.py",
-        "es": "tools/assemble_es.py",
-    }[lang]
-    return [sys.executable, _ROOT / script, nn, workdir, assembled]
+    return [sys.executable, _ROOT / "tools" / "assemble.py", nn, workdir, assembled, lang]
 
 
 def run_verify_json(nn: str, lang: str, assembled: Path) -> tuple[int, dict]:

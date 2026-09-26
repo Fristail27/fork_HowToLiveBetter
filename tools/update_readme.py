@@ -83,8 +83,6 @@ def readme_section(readme_path, lang):
         content = f.read()
     # Find chapter list: lines with numbers followed by titles
     # Pattern: "1. **Title**" or "01. Title" or "1. [Title](link)"
-    pattern = re.compile(r"^\d+\.?\s+.+", re.MULTILINE)
-    sections = list(pattern.finditer(content))
     return content, 0, len(content)
 
 

@@ -8,7 +8,10 @@ Splits the Chinese original into per-item work units:
 Usage:
   python3 tools/make_digest.py 16          # -> tools/digest/16/units/*.md + blocks.json
 """
-import json, os, re, sys
+import json
+import os
+import re
+import sys
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 n = sys.argv[1]
@@ -20,18 +23,18 @@ path = os.path.join(root, "book", srcs[0])
 lines = open(path, encoding="utf-8").read().splitlines()
 
 head, items, cur = [], [], None
-for l in lines:
-    if l.startswith("### "):
-        cur = {"title": l, "tag": "", "src": [], "body": []}
+for ln in lines:
+    if ln.startswith("### "):
+        cur = {"title": ln, "tag": "", "src": [], "body": []}
         items.append(cur)
     elif cur is None:
-        head.append(l)
-    elif l.startswith("<!-- 成本标签"):
-        cur["tag"] = l
-    elif l.startswith("- 来源："):
-        cur["src"].append(l)
+        head.append(ln)
+    elif ln.startswith("<!-- 成本标签"):
+        cur["tag"] = ln
+    elif ln.startswith("- 来源："):
+        cur["src"].append(ln)
     else:
-        cur["body"].append(l)
+        cur["body"].append(ln)
 
 d = os.path.join(root, "tools", "digest", n)
 os.makedirs(os.path.join(d, "units"), exist_ok=True)
