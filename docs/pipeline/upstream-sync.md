@@ -129,8 +129,8 @@ These are fork-owned. A broad `git merge upstream/main` or `checkout upstream/ma
 ## ZH policy
 
 - `book/*.md` and root Chinese `docs/*.md` are a **live mirror** of upstream content.
-- Site may soft-redirect bare zh browsers to the original Pages host (see `site/index.html`).
-- Product default language is **English** (`/` → `/en/` via the router in `site/index.html`).
+- Chinese CN pages live at `/zh/` on this fork (same auto-detect as other locales).
+- Product default language is **English** when the browser language is unknown (`/` → `/en/`).
 
 ## Dry-run check
 

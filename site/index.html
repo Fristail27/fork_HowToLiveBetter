@@ -15,7 +15,6 @@ window.__HTLB_LANGS__={"codes":["en","ru","zh","es"],"primary":"en","shortLabels
     var L = window.__HTLB_LANGS__ || {codes:['en'], primary:'en'};
     var codes = L.codes || ['en'];
     var primary = L.primary || 'en';
-    var ORIGIN_PAGES = 'https://eternity4719.github.io/HowToLiveBetter/';
     var segs = location.pathname.replace(/\/+$/,'').split('/').filter(Boolean);
     if (segs.length && segs[segs.length-1] === 'index.html') segs.pop();
     var last = segs[segs.length-1] || '';
@@ -27,11 +26,6 @@ window.__HTLB_LANGS__={"codes":["en","ru","zh","es"],"primary":"en","shortLabels
     var p = new URLSearchParams(location.search);
     var saved = localStorage.getItem('htlb-lang');
     var nav = (navigator.language || '').toLowerCase();
-    /* zh browsers → original site unless ?lang= or saved htlb-lang (#23) */
-    if (!p.get('lang') && !saved && nav.startsWith('zh')) {
-      location.replace(ORIGIN_PAGES + location.search + location.hash);
-      return;
-    }
     var sys = null;
     var sorted = codes.slice().sort(function(a,b){ return b.length - a.length; });
     for (var i = 0; i < sorted.length; i++) {
@@ -302,7 +296,7 @@ abbr.term:hover{border-bottom-color:var(--brand-1);color:var(--brand-1)}
     <div class="nav-r">
       <details class="lang-dd" id="lang">
         <summary title="Language / Язык / 语言" aria-label="Выбрать язык"><span id="lang-label">РУ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-                                                                <div class="lang-menu" role="menu">
+                                                                        <div class="lang-menu" role="menu">
           <button role="menuitem" data-lang="en">English</button>
           <button role="menuitem" data-lang="ru">Русский</button>
           <button role="menuitem" data-lang="zh">中文</button>
