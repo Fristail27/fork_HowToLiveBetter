@@ -3,38 +3,35 @@ import os
 import subprocess
 import sys
 
-REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SCRIPTS = {"ru": "assemble.py", "en": "assemble.py", "es": "assemble.py"}
-RUNS_ACTIVE = os.path.join(REPO, "tools", "runs", "active")
+from tools.pipeline.config import default_root, translation_langs, unit_dir
+from tools.pipeline.paths import tr_chapter_path
 
-
-def fname(lang, nn):
-    for f in os.listdir(os.path.join(REPO, "book", lang)):
-        if f.startswith(nn + "-"):
-            return f
-    raise FileNotFoundError(f"{lang}/{nn}")
-
-
-def workdir(lang, nn):
-    return os.path.join(RUNS_ACTIVE, lang, nn)
+REPO = default_root()
 
 
 def main(chapters):
     rows, fails = [], 0
+    py = sys.executable
     for nn in chapters:
-        for lang in ("ru", "en", "es"):
-            bk = fname(lang, nn)
-            out = os.path.join(REPO, "book", lang, bk)
-            wd = workdir(lang, nn)
+        for lang in translation_langs(REPO):
+            try:
+                out = tr_chapter_path(REPO, nn, lang)
+            except FileNotFoundError as e:
+                rows.append((lang, nn, f"ASSEMBLE FAIL: {e}"))
+                fails += 1
+                continue
+            bk = os.path.basename(out)
+            wd = os.path.dirname(unit_dir(REPO, lang, nn))
             if not os.path.isdir(os.path.join(wd, "units")):
                 rows.append((lang, nn, f"ASSEMBLE FAIL: missing {wd}/units"))
                 fails += 1
                 continue
             r = subprocess.run(
-                ["python3", f"tools/{SCRIPTS[lang]}", nn, wd, out, lang],
+                [py, "tools/assemble.py", nn, wd, out, lang],
                 cwd=REPO,
                 capture_output=True,
                 text=True,
+                check=False,
             )
             asm = (r.stdout.strip().splitlines() or ["ERR: " + r.stderr[-120:]])[-1]
             if not asm.startswith("OK"):
@@ -43,7 +40,7 @@ def main(chapters):
                 continue
             v = subprocess.run(
                 [
-                    "python3",
+                    py,
                     "tools/verify.py",
                     nn,
                     "--lang",
@@ -54,6 +51,7 @@ def main(chapters):
                 cwd=REPO,
                 capture_output=True,
                 text=True,
+                check=False,
             )
             ok = any(ln.startswith("OK") for ln in v.stdout.splitlines())
             detail = next(

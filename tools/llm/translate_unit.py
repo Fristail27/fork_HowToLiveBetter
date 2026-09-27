@@ -7,77 +7,44 @@ import re
 import sys
 from pathlib import Path
 
-_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if _ROOT not in sys.path:
-    sys.path.insert(0, _ROOT)
+from tools.llm.client import LLMError, chat
+from tools.pipeline.config import default_root, translation_langs
+from tools.pipeline.labels import field_labels
 
-from tools.llm.client import LLMError, chat, repo_root  # noqa: E402
+LANGS = tuple(translation_langs())
 
-LANGS = ("ru", "en", "es")
-
+# Single source of truth for field labels: tools/rules/<lang>.json.
 REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
-    "ru": (
-        "- Стоимость:",
-        "- Простыми словами:",
-        "- Эффект:",
-        "- Уровень доказательности:",
-        "- Примечания:",
-    ),
-    "en": (
-        "- Cost:",
-        "- In plain terms:",
-        "- Benefit:",
-        "- Evidence grade:",
-        "- Notes:",
-    ),
-    "es": (
-        "- Costo:",
-        "- En términos sencillos:",
-        "- Beneficio:",
-        "- Nivel de evidencia:",
-        "- Notas:",
-    ),
+    lang: tuple(f"- {name}:" for name in field_labels(lang)) for lang in LANGS
 }
+
+_LANG_NAMES = {"ru": "Russian", "en": "English", "es": "Spanish"}
 
 LOCALE_FIELD_HINTS = {
-    "ru": (
-        "Russian field labels (exact list syntax, as in book/ru):\n"
-        + "\n".join(REQUIRED_FIELDS["ru"])
-        + "\nDo NOT use bold labels like **Стоимость:** — only `- Стоимость:`.\n"
+    lang: (
+        f"{_LANG_NAMES[lang]} field labels (exact list syntax, as in book/{lang}):\n"
+        + "\n".join(REQUIRED_FIELDS[lang])
+        + f"\nDo NOT use bold labels like **{field_labels(lang)[0]}:** — "
+        f"only `{REQUIRED_FIELDS[lang][0]}`.\n"
         "Do NOT output §TAG§ or §SRC§ — the pipeline injects them after you translate.\n"
         "Do not translate 来源 lines (they are stripped from the source you see)."
-    ),
-    "en": (
-        "English field labels (exact list syntax, as in book/en):\n"
-        + "\n".join(REQUIRED_FIELDS["en"])
-        + "\nDo NOT use bold labels like **Cost:** — only `- Cost:`.\n"
-        "Do NOT output §TAG§ or §SRC§ — the pipeline injects them after you translate.\n"
-        "Do not translate 来源 lines (they are stripped from the source you see)."
-    ),
-    "es": (
-        "Spanish field labels (exact list syntax, as in book/es):\n"
-        + "\n".join(REQUIRED_FIELDS["es"])
-        + "\nDo NOT use bold labels like **Costo:** — only `- Costo:`.\n"
-        "Do NOT output §TAG§ or §SRC§ — the pipeline injects them after you translate.\n"
-        "Do not translate 来源 lines (they are stripped from the source you see)."
-    ),
+    )
+    for lang in LANGS
 }
 
-RETRY_FIELD_EXAMPLES = {
-    "ru": "- Стоимость: / - Простыми словами:",
-    "en": "- Cost: / - In plain terms:",
-    "es": "- Costo: / - En términos sencillos:",
-}
+RETRY_FIELD_EXAMPLES = {lang: " / ".join(REQUIRED_FIELDS[lang][:2]) for lang in LANGS}
 
 _MARKER_LINE = re.compile(r"^§(?:TAG|SRC)§\s*$")
-_BOLD_FIELD = re.compile(r"^\*\*[^*:\n]+:\*\*", re.M)
+_BOLD_FIELD = re.compile(r"^\*\*[^*:\n]+:\*\*", re.MULTILINE)
 
 
 def normalize_nn(nn: str) -> str:
+    from tools.pipeline.paths import _nn
+
     nn = nn.strip()
     if not re.fullmatch(r"\d{1,2}", nn):
         raise SystemExit(f"invalid --nn: {nn!r}")
-    return f"{int(nn):02d}"
+    return _nn(nn)
 
 
 def normalize_unit(unit: str) -> str:
@@ -87,25 +54,20 @@ def normalize_unit(unit: str) -> str:
     return f"{int(unit):02d}"
 
 
-def digest_root(root: Path) -> Path:
-    return (root / "tools" / "digest").resolve()
-
-
 def out_dir_is_under_digest(out_dir: Path, root: Path | None = None) -> bool:
-    root = root or repo_root()
-    digest = digest_root(root)
+    root = root or Path(default_root())
+    digest = (root / "tools" / "digest").resolve()
     try:
         out_dir.resolve().relative_to(digest)
-        return True
     except ValueError:
         return False
+    else:
+        return True
 
 
 def refuse_digest_outdir(out_dir: Path, root: Path | None = None) -> None:
     if out_dir_is_under_digest(out_dir, root):
-        raise SystemExit(
-            f"refusing --out-dir under tools/digest/: {out_dir.resolve()}"
-        )
+        raise SystemExit(f"refusing --out-dir under tools/digest/: {out_dir.resolve()}")
 
 
 def strip_fence(text: str) -> str:
@@ -123,7 +85,7 @@ def strip_mechanical_markers(text: str) -> str:
         if _MARKER_LINE.match(line.strip()):
             continue
         s = line.strip()
-        if s.startswith("§TAG§") or s.startswith("§SRC§"):
+        if s.startswith(("§TAG§", "§SRC§")):
             continue
         out.append(line)
     return ("\n".join(out).rstrip() + "\n") if out else "\n"
@@ -160,25 +122,27 @@ def validate_unit(text: str, uu: str, lang: str) -> list[str]:
     if uu == "00":
         if "§TAG§" in text or "§SRC§" in text:
             errs.append("intro must not contain §TAG§/§SRC§")
-        if re.search(r"^### ", text, re.M):
+        if re.search(r"^### ", text, re.MULTILINE):
             errs.append("intro must not use ### (item) heading")
-        if not re.search(r"^# ", text, re.M):
+        if not re.search(r"^# ", text, re.MULTILINE):
             errs.append("intro missing # chapter title")
-        for lab in fields:
-            if re.search(rf"^{re.escape(lab)}", text, re.M):
-                errs.append(f"intro must not invent field {lab}")
+        errs.extend(
+            f"intro must not invent field {lab}"
+            for lab in fields
+            if re.search(rf"^{re.escape(lab)}", text, re.MULTILINE)
+        )
         if _BOLD_FIELD.search(text):
             errs.append("intro must not use bold **Label:** fields")
         return errs
 
-    tag_n = len(re.findall(r"^§TAG§\s*$", text, re.M))
-    src_n = len(re.findall(r"^§SRC§\s*$", text, re.M))
+    tag_n = len(re.findall(r"^§TAG§\s*$", text, re.MULTILINE))
+    src_n = len(re.findall(r"^§SRC§\s*$", text, re.MULTILINE))
     if tag_n != 1:
         errs.append(f"need exactly one §TAG§ line (got {tag_n})")
     if src_n != 1:
         errs.append(f"need exactly one §SRC§ line (got {src_n})")
 
-    heads = re.findall(r"^### .+$", text, re.M)
+    heads = re.findall(r"^### .+$", text, re.MULTILINE)
     if len(heads) != 1:
         errs.append(f"need exactly one ### heading (got {len(heads)})")
     else:
@@ -189,9 +153,11 @@ def validate_unit(text: str, uu: str, lang: str) -> list[str]:
     if _BOLD_FIELD.search(text):
         errs.append("bold **Label:** fields forbidden; use - Label:")
 
-    for lab in fields:
-        if not re.search(rf"^{re.escape(lab)}", text, re.M):
-            errs.append(f"missing {lab}")
+    errs.extend(
+        f"missing {lab}"
+        for lab in fields
+        if not re.search(rf"^{re.escape(lab)}", text, re.MULTILINE)
+    )
 
     return errs
 
@@ -223,8 +189,10 @@ def build_messages(
     else:
         user_parts.extend(
             [
-                "Item unit: first line must be `### N. …` (same N as Chinese), then dashed "
-                "field lines with exact locale labels.",
+                (
+                    "Item unit: first line must be `### N. …` (same N as Chinese), then dashed "
+                    "field lines with exact locale labels."
+                ),
                 "Do NOT output §TAG§ or §SRC§ (pipeline injects them).",
                 "Do NOT use bold **Label:** for fields.",
                 "",
@@ -260,7 +228,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = p.parse_args(argv)
 
-    root = repo_root()
+    root = Path(default_root())
     nn = normalize_nn(args.nn)
     uu = normalize_unit(args.unit)
     out_work = Path(args.out_dir)
@@ -271,7 +239,9 @@ def main(argv: list[str] | None = None) -> int:
 
     refuse_digest_outdir(out_work, root)
 
-    digest_unit = root / "tools" / "digest" / nn / "units" / f"{uu}.md"
+    from tools.pipeline.config import unit_dir
+
+    digest_unit = Path(unit_dir(str(root), "cn", nn)) / f"{uu}.md"
     if not digest_unit.is_file():
         raise SystemExit(f"digest unit missing: {digest_unit}")
 
@@ -301,8 +271,7 @@ def main(argv: list[str] | None = None) -> int:
         if not last_errs:
             break
         print(
-            f"attempt {attempt}/{max_attempts} structural fail ({uu}): "
-            + ", ".join(last_errs),
+            f"attempt {attempt}/{max_attempts} structural fail ({uu}): " + ", ".join(last_errs),
             file=sys.stderr,
         )
         messages = build_messages(args.lang, unit_text, gloss, prompt_template, uu=uu)

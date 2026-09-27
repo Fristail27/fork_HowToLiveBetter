@@ -7,6 +7,7 @@ strip → inject mechanical markers → validate_unit (same gate as translation)
 Exit codes: 0 ok; 2 structural fail after retries; 1 LLM/infra error.
 Never writes under tools/digest/ (only <out-dir>/units/<unit>.md).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -14,25 +15,20 @@ import json
 import sys
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parents[2]
-if str(_ROOT) not in sys.path:
-    sys.path.insert(0, str(_ROOT))
-
-from tools.llm.client import LLMError, chat, repo_root  # noqa: E402
-from tools.llm.verify_issues import issues_still_present  # noqa: E402
-from tools.llm.translate_unit import (  # noqa: E402
+from tools.llm.client import LLMError, chat
+from tools.llm.translate_unit import (
     LOCALE_FIELD_HINTS,
     atomic_write,
+    inject_mechanical_markers,
     normalize_nn,
     normalize_unit,
     refuse_digest_outdir,
     strip_fence,
     strip_mechanical_markers,
-    inject_mechanical_markers,
     validate_unit,
 )
-
-REPAIRABLE_KINDS = frozenset({"number_absent", "banned_calque"})
+from tools.llm.verify_issues import REPAIRABLE_KINDS, issues_still_present
+from tools.pipeline.config import default_root, translation_langs
 
 ISSUE_LINES = {
     "number_absent": lambda iss: (
@@ -90,10 +86,11 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Repair one translated unit (verify fails).")
     p.add_argument("--nn", required=True)
     p.add_argument("--unit", required=True)
-    p.add_argument("--lang", required=True, choices=["ru", "en", "es"])
+    p.add_argument("--lang", required=True, choices=translation_langs())
     p.add_argument("--out-dir", required=True, help="workdir (parent of units/)")
     p.add_argument(
-        "--issues-json", required=True,
+        "--issues-json",
+        required=True,
         help='JSON list, e.g. [{"kind":"number_absent","value":"610000","count":1}]',
     )
     args = p.parse_args(argv)
@@ -101,20 +98,22 @@ def main(argv: list[str] | None = None) -> int:
     try:
         issues = json.loads(args.issues_json)
     except ValueError as e:
-        raise SystemExit(f"invalid --issues-json: {e}")
+        raise SystemExit(f"invalid --issues-json: {e}") from None
     if not isinstance(issues, list) or not issues:
         raise SystemExit("--issues-json must be a non-empty list")
     bad = [i for i in issues if i.get("kind") not in REPAIRABLE_KINDS]
     if bad:
         raise SystemExit(f"unrepairable kinds in --issues-json: {bad}")
 
-    root = Path(repo_root())
+    root = Path(default_root())
     nn = normalize_nn(args.nn)
     uu = normalize_unit(args.unit)
     out_work = Path(args.out_dir).resolve()
     refuse_digest_outdir(out_work, root)
 
-    digest_unit = root / "tools" / "digest" / nn / "units" / f"{uu}.md"
+    from tools.pipeline.config import unit_dir
+
+    digest_unit = Path(unit_dir(str(root), "cn", nn)) / f"{uu}.md"
     if not digest_unit.is_file():
         raise SystemExit(f"digest unit missing: {digest_unit}")
     unit_text = strip_mechanical_markers(digest_unit.read_text(encoding="utf-8"))
@@ -130,7 +129,8 @@ def main(argv: list[str] | None = None) -> int:
     prompt_template = prompt_path.read_text(encoding="utf-8")
 
     messages = build_repair_messages(
-        args.lang, unit_text, current_tr, issues, prompt_template, uu=uu)
+        args.lang, unit_text, current_tr, issues, prompt_template, uu=uu
+    )
     max_attempts = 3
     last_errs: list[str] = []
     repaired = ""
@@ -145,37 +145,39 @@ def main(argv: list[str] | None = None) -> int:
         last_errs = validate_unit(repaired, uu, args.lang)
         if last_errs:
             print(
-                f"attempt {attempt}/{max_attempts} structural fail ({uu}): "
-                + ", ".join(last_errs),
+                f"attempt {attempt}/{max_attempts} structural fail ({uu}): " + ", ".join(last_errs),
                 file=sys.stderr,
             )
-            messages.append({
-                "role": "user",
-                "content": (
-                    "Your previous draft failed structural checks: "
-                    + ", ".join(last_errs)
-                    + ". Re-output the FULL repaired unit: line 1 `### N. …`, "
-                    "dashed `- Label:` fields, no §TAG§/§SRC§, no bold labels."
-                ),
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        "Your previous draft failed structural checks: "
+                        + ", ".join(last_errs)
+                        + ". Re-output the FULL repaired unit: line 1 `### N. …`, "
+                        "dashed `- Label:` fields, no §TAG§/§SRC§, no bold labels."
+                    ),
+                }
+            )
             continue
-        leftovers = issues_still_present(strip_mechanical_markers(repaired),
-                                         issues, args.lang)
+        leftovers = issues_still_present(strip_mechanical_markers(repaired), issues, args.lang)
         if not leftovers:
             break
         print(
-            f"attempt {attempt}/{max_attempts} issue assert fail ({uu}): "
-            + ", ".join(leftovers),
+            f"attempt {attempt}/{max_attempts} issue assert fail ({uu}): " + ", ".join(leftovers),
             file=sys.stderr,
         )
-        messages.append({
-            "role": "user",
-            "content": (
-                "Your previous draft did NOT fix: " + ", ".join(leftovers)
-                + ". Re-output the FULL unit with the listed issue(s) fixed. "
-                "Numbers: write the absolute value with digits (e.g. 610 000)."
-            ),
-        })
+        messages.append(
+            {
+                "role": "user",
+                "content": (
+                    "Your previous draft did NOT fix: "
+                    + ", ".join(leftovers)
+                    + ". Re-output the FULL unit with the listed issue(s) fixed. "
+                    "Numbers: write the absolute value with digits (e.g. 610 000)."
+                ),
+            }
+        )
     else:
         print(f"repair failed after {max_attempts} attempts ({uu})", file=sys.stderr)
         return 2

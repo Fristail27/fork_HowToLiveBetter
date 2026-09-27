@@ -10,17 +10,17 @@ Output: tools/validate/results/golden_blind_summary.json with
     preference (false preference = judge noise floor);
   - per_recipe: native preference by degradation recipe.
 """
+
 import glob
 import json
 import os
 import sys
 
-REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, REPO)
+from tools.pipeline.config import default_root
+
+REPO = default_root()
 
 RESULTS = os.path.join(REPO, "tools", "validate", "results")
-MANIFEST = os.path.join(RESULTS, "golden_manifest.json")
-OUT = os.path.join(RESULTS, "golden_blind_summary.json")
 
 
 def load_answers(results_dir=RESULTS):
@@ -53,15 +53,22 @@ def _rate(pairs, answers):
             picked_native += 1
     if answered == 0:
         missing = all(answers.get(p["id"]) is None for p in pairs)
-        return {"picked_original": picked_native, "answered": 0, "ties": ties,
-                "rate": None if missing else 0.0}
-    return {"picked_original": picked_native, "answered": answered, "ties": ties,
-            "rate": round(picked_native / answered, 3)}
+        return {
+            "picked_original": picked_native,
+            "answered": 0,
+            "ties": ties,
+            "rate": None if missing else 0.0,
+        }
+    return {
+        "picked_original": picked_native,
+        "answered": answered,
+        "ties": ties,
+        "rate": round(picked_native / answered, 3),
+    }
 
 
 def summarize(results_dir=RESULTS):
-    manifest = json.load(open(os.path.join(results_dir, "golden_manifest.json"),
-                              encoding="utf-8"))
+    manifest = json.load(open(os.path.join(results_dir, "golden_manifest.json"), encoding="utf-8"))
     answers = load_answers(results_dir)
     non_decoy = [p for p in manifest["pairs"] if not p["decoy"]]
     decoys = [p for p in manifest["pairs"] if p["decoy"]]
@@ -82,16 +89,20 @@ def summarize(results_dir=RESULTS):
         "per_recipe": per_recipe,
         "unanswered": [p["id"] for p in manifest["pairs"] if p["id"] not in answers],
     }
-    with open(os.path.join(results_dir, "golden_blind_summary.json"), "w",
-              encoding="utf-8") as f:
+    with open(os.path.join(results_dir, "golden_blind_summary.json"), "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
     return summary
 
 
 def main():
     s = summarize()
-    print(json.dumps({k: s[k] for k in ("native_preference", "decoy_fp_rate",
-                                        "unanswered")}, ensure_ascii=False, indent=2))
+    print(
+        json.dumps(
+            {k: s[k] for k in ("native_preference", "decoy_fp_rate", "unanswered")},
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
     return 0
 
 

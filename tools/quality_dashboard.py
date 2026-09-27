@@ -11,14 +11,22 @@ import os
 import subprocess
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from tools.pipeline.config import default_root, load_langs, translation_langs
+
+ROOT = default_root()
 
 
-def run(cmd):
-    """Run a command, return (returncode, stdout)."""
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=30,
-                       cwd=ROOT, shell=True,
-                       env={**os.environ, "PATH": f"{ROOT}/.venv/bin:{os.environ['PATH']}"})
+def run(argv):
+    """Run argv with this interpreter; return (returncode, stdout+stderr)."""
+    r = subprocess.run(
+        [sys.executable, *argv],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=ROOT,
+        check=False,
+        env={**os.environ, "PYTHONPATH": ROOT},
+    )
     return r.returncode, (r.stdout + r.stderr)
 
 
@@ -30,7 +38,7 @@ def count_chapters(lang_dir):
 
 
 def main():
-    langs = ["ru", "en", "es"]
+    langs = translation_langs(ROOT)
 
     rows = []
     issues = 0
@@ -39,21 +47,21 @@ def main():
         lang_dir = f"book/{lang}"
         n_ch = count_chapters(lang_dir)
 
-        rc, out = run(f"python3 tools/readability.py {lang} --json")
+        rc, out = run(["tools/readability.py", lang, "--json"])
         readability = {"score": "N/A", "below_target": 0}
         if rc == 0 and out.strip():
             try:
                 data = json.loads(out)
                 scores = [r["score"] for r in data if "score" in r]
                 if scores:
-                    readability["score"] = f"{sum(scores)/len(scores):.0f}"
+                    readability["score"] = f"{sum(scores) / len(scores):.0f}"
                     readability["below_target"] = sum(1 for s in scores if s < 60)
             except json.JSONDecodeError:
                 pass
         if readability["below_target"] > 0:
             issues += 1
 
-        rc, out = run(f"python3 tools/bureaucratese.py {lang} --json")
+        rc, out = run(["tools/bureaucratese.py", lang, "--json"])
         bur_hits = 0
         if out.strip():
             try:
@@ -65,34 +73,36 @@ def main():
         if bur_hits > 0:
             issues += 1
 
-        og_dir = os.path.join(ROOT, "og", lang)
-        og_ok = n_ch
-        og_missing = 0
-        if os.path.isdir(og_dir):
-            og_missing = n_ch - len([f for f in os.listdir(og_dir)
-                                     if f.endswith(".png")])
-            og_ok = n_ch - og_missing
+        # One OG preview per language: authored HTML + rendered PNG.
+        og_html = os.path.join(ROOT, "tools", "og", f"{lang}.html")
+        og_png = os.path.join(ROOT, "site", "assets", "og", f"{lang}.png")
+        og_have = [
+            name for name, path in (("html", og_html), ("png", og_png)) if os.path.isfile(path)
+        ]
+        og_status = "OK" if len(og_have) == 2 else ("+".join(og_have) or "MISSING")
+        if og_status != "OK":
+            issues += 1
 
-        readme_files = {
-            "ru": "README.ru.md",
-            "en": "README.md",
-            "es": "README.es.md",
-        }
-        rm_file = readme_files.get(lang, f"README.{lang}.md")
+        rm_file = next(
+            (e["readme"] for e in load_langs(ROOT) if e.get("code") == lang),
+            f"README.{lang}.md",
+        )
         rm_path = os.path.join(ROOT, rm_file)
         rm_ok = "OK" if os.path.isfile(rm_path) else "MISSING"
         if rm_ok == "MISSING":
             issues += 1
 
-        rows.append({
-            "lang": lang.upper(),
-            "chapters": n_ch,
-            "readability": f"{readability['score']}",
-            "below60": readability["below_target"],
-            "bureaucratese": bur_hits,
-            "og": f"{og_ok}/{n_ch}",
-            "readme": rm_ok,
-        })
+        rows.append(
+            {
+                "lang": lang.upper(),
+                "chapters": n_ch,
+                "readability": f"{readability['score']}",
+                "below60": readability["below_target"],
+                "bureaucratese": bur_hits,
+                "og": og_status,
+                "readme": rm_ok,
+            }
+        )
 
     header = f"{'Lang':>6} {'Ch':>3} {'Read':>5} {'<60':>4} {'Bur':>5} {'OG':>8} {'README':>8}"
     sep = "-" * len(header)
@@ -102,17 +112,22 @@ def main():
     for r in rows:
         bur_flag = f"⚠{r['bureaucratese']}" if r["bureaucratese"] > 100 else str(r["bureaucratese"])
         readme_flag = f"⚠ {r['readme']}" if r["readme"] != "OK" else r["readme"]
-        print(f"{r['lang']:>6} {r['chapters']:>3} {r['readability']:>5} "
-              f"{r['below60']:>4} {bur_flag:>5} {r['og']:>8} {readme_flag:>8}")
+        og_flag = f"⚠ {r['og']}" if r["og"] != "OK" else r["og"]
+        print(
+            f"{r['lang']:>6} {r['chapters']:>3} {r['readability']:>5} "
+            f"{r['below60']:>4} {bur_flag:>5} {og_flag:>8} {readme_flag:>8}"
+        )
     print(sep)
 
     total_ch = sum(r["chapters"] for r in rows)
     total_below = sum(r["below60"] for r in rows)
     print(f"\n{total_ch} chapters × {len(langs)} languages")
-    print(f"Readability target (≥60): {total_ch * len(langs) - total_below}/{total_ch * len(langs)} pass "
-          f"({total_below} below)")
+    print(
+        f"Readability target (≥60): {total_ch * len(langs) - total_below}/{total_ch * len(langs)} pass "
+        f"({total_below} below)"
+    )
 
-    rc, out = run("python3 -m pytest tools/validate/tests/ tools/llm/tests/ --tb=no -q")
+    rc, out = run(["-m", "pytest", "tools/validate/tests/", "tools/llm/tests/", "--tb=no", "-q"])
     tests_ok = rc == 0
     if tests_ok:
         for line in out.splitlines():

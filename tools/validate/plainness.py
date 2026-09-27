@@ -17,16 +17,15 @@ Checks (all WARN):
   unexplained_abbrev 2+ ALL-CAPS letter run not whitelisted and not explained
                      in parentheses right after first use
 """
-import json
+
 import os
 import re
 import sys
 
-REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if REPO not in sys.path:
-    sys.path.insert(0, REPO)
+from tools.pipeline.config import default_root, load_lang_rules, translation_langs
+from tools.pipeline.labels import PLAIN_FIELD_INDEX, field_labels
 
-RULES_DIR = os.path.join(REPO, "tools", "rules")
+REPO = default_root()
 
 SENT_SPLIT_RE = re.compile(r"(?<=[.!?;])\s+")
 WORD_RE = re.compile(r"[\w}-]+", re.UNICODE)
@@ -38,26 +37,51 @@ ABBREV_RE = re.compile(r"\b[A-ZА-ЯЁ]{2,}\b", re.UNICODE)
 EXPLAIN_RE = re.compile(r"\(\s*[^)]{3,60}\s*\)")
 
 DEFAULT_OK = {
-    "ru": {"РФ", "СНГ", "ВОЗ", "СМС", "ЛОР", "УЗИ", "МРТ", "КТ", "ЭКГ", "ЭЭГ",
-           "ДНД", "ГИА", "ЕГЭ", "ДТП", "СИЗ", "ФАП", "ОМС"},
-    "en": {"USA", "UK", "EU", "WHO", "SMS", "MRI", "CT", "ECG", "EEG", "DNA",
-           "ER", "ICU", "AED", "OTC", "BP"},
+    "ru": {
+        "РФ",
+        "СНГ",
+        "ВОЗ",
+        "СМС",
+        "ЛОР",
+        "УЗИ",
+        "МРТ",
+        "КТ",
+        "ЭКГ",
+        "ЭЭГ",
+        "ДНД",
+        "ГИА",
+        "ЕГЭ",
+        "ДТП",
+        "СИЗ",
+        "ФАП",
+        "ОМС",
+    },
+    "en": {
+        "USA",
+        "UK",
+        "EU",
+        "WHO",
+        "SMS",
+        "MRI",
+        "CT",
+        "ECG",
+        "EEG",
+        "DNA",
+        "ER",
+        "ICU",
+        "AED",
+        "OTC",
+        "BP",
+    },
 }
 
-PLAIN_FIELD = {"ru": "Простыми словами", "en": "In plain terms", "cn": "说人话"}
-
-
-def _pack(lang):
-    path = os.path.join(RULES_DIR, f"{lang}.json")
-    if os.path.isfile(path):
-        return json.load(open(path, encoding="utf-8"))
-    return {}
+PLAIN_LANGS = ("cn", *translation_langs())
 
 
 def plain_fields(body, pack):
     """Extract (unit_header, plain_field_text) pairs from a chapter body."""
     lang = pack.get("lang", "ru")
-    field = PLAIN_FIELD.get(lang, "Простыми словами")
+    field = field_labels(lang if lang in PLAIN_LANGS else "ru", root=REPO)[PLAIN_FIELD_INDEX]
     out = []
     for block in re.split(r"\n(?=### )", body):
         m = re.search(rf"^- {re.escape(field)}:\s*(.+)$", block, re.MULTILINE)
@@ -82,18 +106,23 @@ def check_field(text, pack):
     for sent in SENT_SPLIT_RE.split(text):
         words = WORD_RE.findall(sent)
         if len(words) > max_words:
-            warns.append({"type": "long_sentence", "words": len(words),
-                          "excerpt": " ".join(words[:12]) + "…"})
+            warns.append(
+                {
+                    "type": "long_sentence",
+                    "words": len(words),
+                    "excerpt": " ".join(words[:12]) + "…",
+                }
+            )
         which = WHICH_RE.get(lang)
         if which and len(which.findall(sent)) > max_which:
-            warns.append({"type": "which_chain",
-                          "count": len(which.findall(sent)),
-                          "excerpt": sent[:80]})
+            warns.append(
+                {"type": "which_chain", "count": len(which.findall(sent)), "excerpt": sent[:80]}
+            )
     for m in ABBREV_RE.finditer(text):
         abbr = m.group(0)
         if abbr in ok:
             continue
-        tail = text[m.end():m.end() + 70]
+        tail = text[m.end() : m.end() + 70]
         if EXPLAIN_RE.match(tail.lstrip(" —-")):
             continue
         warns.append({"type": "unexplained_abbrev", "abbr": abbr})
@@ -111,17 +140,20 @@ def check_chapter(body, pack):
 
 def main():
     import argparse
+
     ap = argparse.ArgumentParser(description="Plainness lint (WARN-only)")
     ap.add_argument("chapter", help="chapter number, e.g. 16")
     ap.add_argument("--lang", default="ru")
     ap.add_argument("--book-dir", default=os.path.join(REPO, "book"))
     args = ap.parse_args()
-    if args.lang not in PLAIN_FIELD:
-        print(f"WARN: plainness skip: no plain-field label for lang={args.lang!r} "
-              f"(supported: {', '.join(sorted(PLAIN_FIELD))})",
-              file=sys.stderr)
+    if args.lang not in PLAIN_LANGS:
+        print(
+            f"WARN: plainness skip: no plain-field label for lang={args.lang!r} "
+            f"(supported: {', '.join(sorted(PLAIN_LANGS))})",
+            file=sys.stderr,
+        )
         return 0
-    pack = _pack(args.lang)
+    pack = load_lang_rules(args.lang, root=REPO)
     pack.setdefault("lang", args.lang)
     lang_dir = os.path.join(args.book_dir, args.lang)
     base = lang_dir if os.path.isdir(lang_dir) else args.book_dir
@@ -131,8 +163,11 @@ def main():
         prefixes.append(f"{int(ch):02d}-")
         prefixes.append(f"{int(ch)}-")
     prefixes = list(dict.fromkeys(prefixes))
-    files = [p for p in os.listdir(base)
-             if p.endswith(".md") and any(p.startswith(pref) for pref in prefixes)]
+    files = [
+        p
+        for p in os.listdir(base)
+        if p.endswith(".md") and any(p.startswith(pref) for pref in prefixes)
+    ]
     if not files:
         print(f"chapter {args.chapter}: not found", file=sys.stderr)
         return 2
@@ -140,8 +175,9 @@ def main():
     report = check_chapter(body, pack)
     n_warns = sum(len(r["warns"]) for r in report)
     flagged = [r for r in report if r["warns"]]
-    print(f"units with plain field: {len(report)} | WARNs: {n_warns} "
-          f"| flagged units: {len(flagged)}")
+    print(
+        f"units with plain field: {len(report)} | WARNs: {n_warns} | flagged units: {len(flagged)}"
+    )
     for r in flagged[:10]:
         print(f"- {r['unit'][:60]}")
         for w in r["warns"][:4]:

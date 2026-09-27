@@ -3,15 +3,14 @@
 Marker data lives in tools/rules/<lang>.json (style_markers + whitelist_zones);
 the engine (tools/style_check.py) is language-agnostic.
 """
+
 import os
 import sys
 import unittest
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
-
-from tools.pipeline import config as pconfig  # noqa: E402
+from tools.llm.tests.helpers import run_cli
+from tools.pipeline import config as pconfig
+from tools.test_paths import REPO_ROOT
 
 CLEAN = """# 2. Не умирайте медленно
 
@@ -88,14 +87,14 @@ def _bangladesh_marker_warns(warns):
 
 class TestRulesData(unittest.TestCase):
     def test_ru_markers_filled(self):
-        rules = pconfig.load_lang_rules("ru", root=ROOT)
+        rules = pconfig.load_lang_rules("ru", root=REPO_ROOT)
         self.assertGreaterEqual(len(rules["style_markers"]), 5)
         for m in rules["style_markers"]:
             self.assertIn("pattern", m)
             self.assertIn("label", m)
 
     def test_ru_whitelist_zones(self):
-        rules = pconfig.load_lang_rules("ru", root=ROOT)
+        rules = pconfig.load_lang_rules("ru", root=REPO_ROOT)
         zones = " ".join(rules["whitelist_zones"])
         self.assertIn("Эффект", zones)
         self.assertIn("Примечания", zones)
@@ -104,7 +103,8 @@ class TestRulesData(unittest.TestCase):
 class TestStyleCheck(unittest.TestCase):
     def _warns(self, text, lang="ru"):
         from tools.style_check import check_text
-        return check_text(text, lang, root=ROOT)
+
+        return check_text(text, lang, root=REPO_ROOT)
 
     def test_clean_text_zero_warnings(self):
         self.assertEqual(self._warns(CLEAN), [])
@@ -133,14 +133,16 @@ class TestStyleCheck(unittest.TestCase):
 
     def test_engine_reads_rules_not_hardcoded(self):
         import tools.style_check as sc
-        self.assertTrue(sc.load_markers("ru", root=ROOT))
+
+        self.assertTrue(sc.load_markers("ru", root=REPO_ROOT))
         # engine must fail loudly for unknown language (config-driven)
         with self.assertRaises(ValueError):
-            sc.load_markers("zz", root=ROOT)
+            sc.load_markers("zz", root=REPO_ROOT)
 
     def test_glossary_plain_only_flags_bangladesh_calque(self):
         from tools.style_check import check_text
-        warns = check_text(BANGLADESH_PLAIN, "ru", root=ROOT, plain_only=True)
+
+        warns = check_text(BANGLADESH_PLAIN, "ru", root=REPO_ROOT, plain_only=True)
         spans = " ".join(w["span"] for w in warns)
         self.assertIn("Бангладеш", spans)
         labels = {w["label"] for w in warns}
@@ -149,20 +151,24 @@ class TestStyleCheck(unittest.TestCase):
 
     def test_bangladesh_correct_prep_plain_only_no_false_positive(self):
         from tools.style_check import check_text
-        warns = check_text(BANGLADESH_CORRECT_IN, "ru", root=ROOT, plain_only=True)
+
+        warns = check_text(BANGLADESH_CORRECT_IN, "ru", root=REPO_ROOT, plain_only=True)
         self.assertEqual(_bangladesh_marker_warns(warns), [])
 
     def test_bangladesh_pilot_genitive_plain_only_clean(self):
         from tools.style_check import check_text
-        warns = check_text(BANGLADESH_CORRECT_PREP, "ru", root=ROOT, plain_only=True)
+
+        warns = check_text(BANGLADESH_CORRECT_PREP, "ru", root=REPO_ROOT, plain_only=True)
         self.assertEqual(_bangladesh_marker_warns(warns), [])
 
     def test_plain_only_scans_plain_line_only(self):
         from tools.style_check import check_text
-        plain = check_text(BANGLADESH_PLAIN, "ru", root=ROOT, plain_only=True)
+
+        plain = check_text(BANGLADESH_PLAIN, "ru", root=REPO_ROOT, plain_only=True)
         self.assertTrue(plain)
         plain_line_no = next(
-            i for i, ln in enumerate(BANGLADESH_PLAIN.splitlines(), 1)
+            i
+            for i, ln in enumerate(BANGLADESH_PLAIN.splitlines(), 1)
             if ln.lstrip().startswith("- Простыми словами:")
         )
         self.assertEqual({w["line_no"] for w in plain}, {plain_line_no})
@@ -170,16 +176,22 @@ class TestStyleCheck(unittest.TestCase):
 
 class TestCliAlwaysZero(unittest.TestCase):
     def test_cli_plain_only_warns_bangladesh(self):
-        import subprocess
         import tempfile
+
         fd, path = tempfile.mkstemp(suffix=".md")
         with os.fdopen(fd, "w") as f:
             f.write(BANGLADESH_PLAIN)
         try:
-            proc = subprocess.run(
-                [sys.executable, os.path.join(ROOT, "tools", "style_check.py"),
-                 path, "--lang", "ru", "--plain-only"],
-                capture_output=True, text=True, cwd=ROOT)
+            proc = run_cli(
+                [
+                    sys.executable,
+                    os.path.join(REPO_ROOT, "tools", "style_check.py"),
+                    path,
+                    "--lang",
+                    "ru",
+                    "--plain-only",
+                ],
+            )
             self.assertEqual(proc.returncode, 0)
             self.assertIn("Бангладеш", proc.stdout)
             self.assertIn("WARN", proc.stdout)
@@ -187,32 +199,43 @@ class TestCliAlwaysZero(unittest.TestCase):
             os.unlink(path)
 
     def test_cli_exit_zero_even_with_warnings(self):
-        import subprocess
         import tempfile
+
         fd, path = tempfile.mkstemp(suffix=".md")
         with os.fdopen(fd, "w") as f:
             f.write(BUREAUCRATESE)
         try:
-            proc = subprocess.run(
-                [sys.executable, os.path.join(ROOT, "tools", "style_check.py"),
-                 path, "--lang", "ru"],
-                capture_output=True, text=True, cwd=ROOT)
+            proc = run_cli(
+                [
+                    sys.executable,
+                    os.path.join(REPO_ROOT, "tools", "style_check.py"),
+                    path,
+                    "--lang",
+                    "ru",
+                ],
+            )
             self.assertEqual(proc.returncode, 0)
             self.assertIn("WARN", proc.stdout)
         finally:
             os.unlink(path)
 
     def test_cli_es_missing_pack_soft_skips(self):
-        import subprocess
         import tempfile
+
         fd, path = tempfile.mkstemp(suffix=".md")
         with os.fdopen(fd, "w") as f:
             f.write("- En términos sencillos: hola.\n")
         try:
-            proc = subprocess.run(
-                [sys.executable, os.path.join(ROOT, "tools", "style_check.py"),
-                 path, "--lang", "es", "--plain-only"],
-                capture_output=True, text=True, cwd=ROOT)
+            proc = run_cli(
+                [
+                    sys.executable,
+                    os.path.join(REPO_ROOT, "tools", "style_check.py"),
+                    path,
+                    "--lang",
+                    "es",
+                    "--plain-only",
+                ],
+            )
             self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
             self.assertIn("0 warnings", proc.stdout.lower())
             self.assertNotIn("Traceback", proc.stderr)

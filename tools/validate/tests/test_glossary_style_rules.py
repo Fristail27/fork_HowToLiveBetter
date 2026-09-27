@@ -1,8 +1,11 @@
 import json
 import os
 import unittest
-REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-GLOSS = os.path.join(REPO, "tools", "glossary.json")
+
+from tools.test_paths import REPO_ROOT
+
+GLOSS = os.path.join(REPO_ROOT, "tools", "glossary.json")
+
 
 class TestGlossaryStyleRules(unittest.TestCase):
     def test_langs_have_distinctive_contract(self):
