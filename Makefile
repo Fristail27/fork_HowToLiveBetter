@@ -89,7 +89,7 @@ web-build:  ## Regenerate per-language pages
 	$(PY) tools/build_pages.py
 
 og:  ## Regenerate OG preview images from HTML templates
-	@for lang in en ru es; do \
+	@for lang in en ru es zh; do \
 		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
 			--headless --disable-gpu --hide-scrollbars \
 			--force-device-scale-factor=1 --window-size=1200,630 \
