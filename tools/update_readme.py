@@ -62,17 +62,12 @@ def scan_chapters(lang_dir):
     return chapters
 
 
-def check_og_images(lang, chapters):
-    """Check og/{lang}/ directory for preview images."""
-    og_dir = os.path.join(ROOT, "og", lang)
-    missing = []
-    if not os.path.isdir(og_dir):
-        return [(cid, title) for cid, _, title, _ in chapters]
-    for cid, _, title, _ in chapters:
-        og_path = os.path.join(og_dir, f"{cid:02d}.png")
-        if not os.path.isfile(og_path):
-            missing.append((cid, title))
-    return missing
+def check_og_preview(lang):
+    """Check root-level og-{lang}.png exists."""
+    og_path = os.path.join(ROOT, f"og-{lang}.png")
+    if not os.path.isfile(og_path):
+        return [(0, f"og-{lang}.png missing")]
+    return []
 
 
 def readme_section(readme_path, lang):
@@ -100,7 +95,7 @@ def check_readme(lang, chapters):
     content, _, _ = readme_section(readme_path, lang)
 
     issues = []
-    entries = re.findall(r"^\s*(\d+)\.?\s+(.+)", content, re.MULTILINE)
+    entries = re.findall(r"^\s*(\d{1,2})\.?\s+(.+)", content, re.MULTILINE)
     readme_ids = [int(n) for n, _ in entries]
     chapter_ids = [cid for cid, _, _, _ in chapters]
 
@@ -137,7 +132,7 @@ def main():
             continue
 
         chapters = scan_chapters(lang_dir)
-        og_missing = check_og_images(lang, chapters)
+        og_missing = check_og_preview(lang)
         rm_issue, _ = check_readme(lang, chapters)
         has_missing_og = [(cid, title) for cid, title in og_missing]
 

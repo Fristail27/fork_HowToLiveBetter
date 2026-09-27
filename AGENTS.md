@@ -38,6 +38,10 @@ After sync: diff new/changed `book/NN-*.md` and catch up each `book/<lang>/`.
 
 Entry point: `make help` lists all commands. Topology: `pipeline.yaml`.
 
+### Adding a chapter
+
+Full checklist: [docs/pipeline/add-chapter.md](docs/pipeline/add-chapter.md). Summary: digest → translate → assemble → verify → status → build → commit.
+
 ### Conventions
 
 - **CN source is read-only.** Only `sync-upstream` touches `book/NN-*.md`.
