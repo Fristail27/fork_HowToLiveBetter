@@ -76,21 +76,22 @@ make web-build
 Audit README chapter lists and OG preview images:
 
 ```bash
-python3 tools/update_readme.py
+make update-readme
 ```
 
 If README chapter counts are wrong, regenerate:
 
 ```bash
-python3 tools/update_readme.py --fix
+make update-readme --fix
 ```
 
-OG previews: regenerate `og-{lang}.png` from `tools/og-{lang}.html` when chapter count changes:
+OG previews: regenerate `og-{lang}.png` from `og-{lang}.html` templates when chapter count changes:
 
 ```bash
-# Example: open tools/og-en.html in browser, screenshot → og-en.png
-# Future: automated via headless browser
+make og
 ```
+
+This uses headless Chrome for pixel-perfect 1200×630 screenshots.
 
 ### 8. Quality gates
 

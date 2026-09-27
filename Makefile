@@ -4,7 +4,7 @@
 PY = .venv/bin/python3
 RUFF = .venv/bin/ruff
 
-.PHONY: help sync-upstream digest assemble verify verify-all wave status lint test test-integration ci
+.PHONY: help sync-upstream digest assemble verify verify-all wave status lint test test-integration ci og update-readme
 
 check-content:  ## CJK-leak, parity, readme-badge checks
 	$(PY) tools/check_content.py
@@ -87,6 +87,15 @@ status:  ## Show translation dashboard
 
 web-build:  ## Regenerate per-language pages
 	$(PY) tools/build_pages.py
+
+og:  ## Regenerate OG preview images from HTML templates
+	@for lang in en ru es; do \
+		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+			--headless --disable-gpu --hide-scrollbars \
+			--force-device-scale-factor=1 --window-size=1200,630 \
+			--screenshot=og-$$lang.png og-$$lang.html; \
+		echo "✓ og-$$lang.png"; \
+	done
 
 # ── Quality ────────────────────────────────────────────────────
 
