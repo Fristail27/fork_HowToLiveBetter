@@ -17,6 +17,20 @@ jobs:
           python-version: '3.11'
       - name: Install deps
         run: pip install -r requirements-dev.txt
+      - name: Commit message style
+        if: github.event_name == 'pull_request'
+        run: |
+          set -e
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          base="origin/${{ github.base_ref }}"
+          failed=0
+          for c in $(git rev-list --no-merges "$base"..HEAD); do
+            echo "── checking $c ──"
+            if ! git log -1 --format=%B "$c" | python3 tools/check_commit_msg.py --stdin; then
+              failed=1
+            fi
+          done
+          exit $failed
       - name: Generate digest fixtures
         run: python3 tools/make_digest.py 01
       - name: Run unit tests

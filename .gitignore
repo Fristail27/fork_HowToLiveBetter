@@ -1,12 +1,18 @@
 .idea/
 .junie/
+.cursor/
 node_modules/
 dist/
 
 # translation pipeline transient state
+run/
 tools/digest/
 tools/runs/
 tools/.status/
+
+# local tool caches
+.pytest_cache/
+.ruff_cache/
 
 # quality pipeline v2 transient state (verdicts and QE caches are machine-local)
 tools/judge/

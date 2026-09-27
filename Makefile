@@ -4,7 +4,7 @@
 PY = .venv/bin/python3
 RUFF = .venv/bin/ruff
 
-.PHONY: help sync-upstream digest assemble verify verify-all wave status lint test test-integration ci og update-readme
+.PHONY: help sync-upstream digest assemble verify verify-all wave status lint test test-integration ci og update-readme hooks check-commit-msg
 
 check-content:  ## CJK-leak, parity, readme-badge checks
 	$(PY) tools/check_content.py
@@ -22,6 +22,14 @@ ci:  ## Full local CI: test + lint + links + content + build
 	$(PY) tools/check_content.py
 	@echo "=== Build pages ==="
 	$(PY) tools/build_pages.py
+
+hooks:  ## Install local git hooks (commit-msg style check)
+	git config core.hooksPath .githooks
+	@echo "✓ core.hooksPath=.githooks (commit-msg enforced)"
+
+check-commit-msg:  ## Validate a message: make check-commit-msg MSG='fix: …'
+	@[ -n "$(MSG)" ] || (echo "Usage: make check-commit-msg MSG='type: description'" && exit 1)
+	@printf '%s\n' "$(MSG)" | $(PY) tools/check_commit_msg.py --stdin
 
 quality:  ## Content quality gates: readability + bureaucratese (strict)
 	@echo "=== Readability ==="

@@ -32,7 +32,7 @@ After sync: diff new/changed `book/NN-*.md` and catch up each `book/<lang>/`.
 
 ## Never overwrite (fork-owned)
 
-`README.md`, `README.ru.md`, `index.html`, `og*`, `tools/v2*`, `tools/build_pages.py`, `tools/langs.json`, generated `en|ru|zh|v2/`, `.github/workflows/`, `CLAUDE.md`, `TRANSLATION.md`, `sitemap.xml`, `book/en|ru/`, `docs/en|ru/`.", "file_path" string="true">/Users/dlgrv/github/HowToLiveBetter/AGENTS.md
+`README.md`, `README.ru.md`, `index.html`, `og*`, `tools/v2*`, `tools/build_pages.py`, `tools/langs.json`, generated `en|ru|zh|v2/`, `.github/workflows/`, `CLAUDE.md`, `TRANSLATION.md`, `sitemap.xml`, `book/en|ru/`, `docs/en|ru/`.
 
 ## Pipeline (for AI agents)
 
@@ -51,6 +51,35 @@ Full checklist: [docs/pipeline/add-chapter.md](docs/pipeline/add-chapter.md). Su
 - **Run state is gitignored** — `run/`, `tools/digest/`, `tools/.status/`, `tools/runs/`.
 - **Tool output contracts:** `--json` → structured stdout. Exit codes: 0=pass, 1=FAIL, 2=WARN.
 - **Commit policy:** publication only through MR + squash-merge to `main`. No direct pushes.
+- **Commit messages:** English Conventional Commits only — enforced by `.githooks/commit-msg` and CI on PRs. Run `make hooks` once after clone.
+
+### Commit messages
+
+Format: `type(optional-scope): description`
+
+| Rule | Detail |
+|---|---|
+| Language | **English only** (no Cyrillic / CJK in subject or body) |
+| Types | `feat` `fix` `docs` `chore` `ci` `test` `refactor` `sync` `translation` `quality` |
+| Scope | optional, lowercase: `ru` `en` `es` `pipeline` `og` `ch02` `skills` … |
+| Description | imperative, starts with lowercase letter/digit, no trailing period, subject ≤72 chars |
+| Body | optional; blank line after subject |
+| Forbidden | Cursor/AI attribution trailers (`Co-authored-by: Cursor`, `Made with Cursor`, …) |
+| Allowed exceptions | `Merge pull request/branch …`, `Revert "…"` |
+
+Examples:
+
+```
+translation(ru): chapter 02
+sync: pull upstream chapters 03, 08, 10
+fix(og): restore V2 editorial templates
+feat(pipeline): add make og target for locale previews
+quality(ru): strip bureaucratese markers
+chore: ignore pipeline run state and untrack judge verdicts
+ci: enforce English conventional commit messages
+```
+
+Local check: `make check-commit-msg MSG='fix: restore templates'` or `make hooks` then normal `git commit`.
 
 ### Typical agent session
 
@@ -80,7 +109,8 @@ make status
 ```bash
 # After translation work — always ask user before committing.
 # Merge strategy: branch → MR → squash to main.
+# Subject must stay English (do not paste RU/CN chapter titles into the message).
 git checkout -b translation/ru-ch02
 git add book/ru/ translations.json
-git commit -m "translation(ru): chapter 02 — $(grep '^# ' book/ru/02-*.md | head -1 | cut -d' ' -f2-)"
+git commit -m "translation(ru): chapter 02"
 ```
