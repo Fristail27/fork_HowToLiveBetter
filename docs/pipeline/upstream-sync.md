@@ -1,6 +1,6 @@
 # Syncing Chinese content from upstream
 
-> **Agents:** this file is mandatory for any upstream pull. Also mirrored in [AGENTS.md](../AGENTS.md) and the fork banner in [CLAUDE.md](../CLAUDE.md).
+> **Agents:** this file is mandatory for any upstream pull. Also mirrored in [AGENTS.md](../../AGENTS.md) and the fork banner in [CLAUDE.md](../../CLAUDE.md).
 
 This fork (`dlgrv/HowToLiveBetter`) is an **English-primary translation overlay** on [eternity4719/HowToLiveBetter](https://github.com/eternity4719/HowToLiveBetter). Chinese chapter files stay at `book/*.md` (same paths as upstream). Do **not** merge upstream wholesale.
 
@@ -40,7 +40,7 @@ Review `git status` / `git diff --stat` before committing. Then:
 
 ## Translation catch-up (after CN sync)
 
-Chinese files at `book/NN-*.md` are the source of truth. After every path-filtered pull, list what moved and re-run locales through the **locked pipeline order** in [docs/translation-playbook.md §2](translation-playbook.md#2-пайплайн) (same as plan paths **A** / **B** in [plain-language pipeline plan](superpowers/plans/2026-09-23-plain-language-pipeline.md#correct-pipeline-order-commands)).
+Chinese files at `book/NN-*.md` are the source of truth. After every path-filtered pull, list what moved and re-run locales through the **locked pipeline order** in [docs/translation-playbook.md §2](translation-playbook.md#2-пайплайн) (same as plan paths **A** / **B** in [plain-language pipeline plan](../agent-sessions/superpowers/plans/2026-09-23-plain-language-pipeline.md#correct-pipeline-order-commands)).
 
 ### 1. Inventory CN changes
 
@@ -56,11 +56,11 @@ git diff --name-only HEAD -- docs/*.md
 git diff --cached --name-only -- docs/*.md
 ```
 
-Extract `<NN>` from each `book/NN-*.md` filename. If `README.zh.md` changed, queue README work for each non-`zh` locale (`README.md`, `README.ru.md`, `README.es.md`, … — see [tools/langs.json](../tools/langs.json)).
+Extract `<NN>` from each `book/NN-*.md` filename. If `README.zh.md` changed, queue README work for each non-`zh` locale (`README.md`, `README.ru.md`, `README.es.md`, … — see [tools/langs.json](../../tools/langs.json)).
 
 ### 2. Queue locales
 
-For each changed `<NN>`, catch up **every shipped translation locale** (today: `en`, `ru`, `es`). Skip `zh` (live mirror at `book/*.md`). Match slugs under `book/<lang>/` to the Chinese chapter; conventions in [TRANSLATION.md](../TRANSLATION.md).
+For each changed `<NN>`, catch up **every shipped translation locale** (today: `en`, `ru`, `es`). Skip `zh` (live mirror at `book/*.md`). Match slugs under `book/<lang>/` to the Chinese chapter; conventions in [TRANSLATION.md](../../TRANSLATION.md).
 
 ### 3. Choose path A or B
 

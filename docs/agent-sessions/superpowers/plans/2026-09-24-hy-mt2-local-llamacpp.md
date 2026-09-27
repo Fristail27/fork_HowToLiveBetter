@@ -40,7 +40,7 @@ Never whole chapters. Never write into `tools/digest/`.
 | macOS + Cursor/Chrome/Docker LT | ~8–12 GB |
 | **Headroom** | **tight (~3–7 GB)** — close heavy apps |
 
-**Ops rule (hard):** local Q8 = **strictly sequential units** (one translate worker). Playbook “5–6 parallel agents” applies to **cloud** waves only. Parallel only after Q4 (or cloud). See [translation-playbook.md](../../translation-playbook.md).
+**Ops rule (hard):** local Q8 = **strictly sequential units** (one translate worker). Playbook “5–6 parallel agents” applies to **cloud** waves only. Parallel only after Q4 (or cloud). See [translation-playbook.md](../../../pipeline/translation-playbook.md).
 
 **Official vs not:** GGUF from `tencent/Hy-MT2-30B-A3B-GGUF` is **Tencent-published**. Needs llama.cpp with `hy_v3` (HF card STQ notes; historically ~b9993+ — do not treat build number as eternal truth).
 

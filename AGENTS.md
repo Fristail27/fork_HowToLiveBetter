@@ -4,7 +4,7 @@ English-primary fork of [eternity4719/HowToLiveBetter](https://github.com/eterni
 
 ## Sync Chinese content from upstream
 
-**Source of truth for the ritual:** [docs/upstream-sync.md](docs/upstream-sync.md). Read it before any upstream pull. Do **not** `git merge upstream/main`.
+**Source of truth for the ritual:** [docs/pipeline/upstream-sync.md](docs/pipeline/upstream-sync.md). Read it before any upstream pull. Do **not** `git merge upstream/main`.
 
 ```bash
 git fetch upstream
@@ -27,7 +27,7 @@ After sync: diff new/changed `book/NN-*.md` and catch up each `book/<lang>/`.
 ## Locales
 
 - Registry: [tools/langs.json](tools/langs.json)
-- Add a language: [docs/add-language.md](docs/add-language.md)
+- Add a language: [docs/pipeline/add-language.md](docs/pipeline/add-language.md)
 - Conventions: [TRANSLATION.md](TRANSLATION.md)
 
 ## Never overwrite (fork-owned)

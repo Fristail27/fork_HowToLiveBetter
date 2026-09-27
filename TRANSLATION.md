@@ -1,6 +1,6 @@
 # Translation conventions (EN / RU / …)
 
-Applies to everything under `book/<lang>/` for non-Chinese locales (see [docs/add-language.md](docs/add-language.md)). Chinese originals live at `book/*.md`.
+Applies to everything under `book/<lang>/` for non-Chinese locales (see [docs/pipeline/add-language.md](docs/pipeline/add-language.md)). Chinese originals live at `book/*.md`.
 
 ## Status line
 First line of every translated file, before the back-link:
@@ -70,10 +70,10 @@ Chinese original (`../01-不要早死.md`) — that link must not change.
 
 README policy (decided 2026-09-18; clarified 2026-09-22): in the dlgrv fork the primary README language is **English**.
 - `README.md` — English (GitHub root face + site default)
-- `README.zh.md` — Chinese mirror of upstream `README.md` (see [docs/upstream-sync.md](docs/upstream-sync.md); never overwrite root `README.md` from upstream)
+- `README.zh.md` — Chinese mirror of upstream `README.md` (see [docs/pipeline/upstream-sync.md](docs/pipeline/upstream-sync.md); never overwrite root `README.md` from upstream)
 - `README.ru.md` — Russian translation
-- Any further locale: `README.<lang>.md` + `book/<lang>/` (see [docs/add-language.md](docs/add-language.md))
-Keep all READMEs linked via a `Languages:` line. Upstream sync ritual: [docs/upstream-sync.md](docs/upstream-sync.md).
+- Any further locale: `README.<lang>.md` + `book/<lang>/` (see [docs/pipeline/add-language.md](docs/pipeline/add-language.md))
+Keep all READMEs linked via a `Languages:` line. Upstream sync ritual: [docs/pipeline/upstream-sync.md](docs/pipeline/upstream-sync.md).
 
 EN filenames: English slugs under `book/en/`, same two-digit prefix (decided 2026-09-18):
 

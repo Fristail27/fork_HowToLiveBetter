@@ -1,6 +1,6 @@
 > Unofficial translation of [docs/遇到陌生人出事该不该停.md](../遇到陌生人出事该不该停.md). In case of discrepancies the Chinese original takes precedence.
 
-[← Volver al índice general](../../README.md)
+[← Volver al índice general](../../../README.md)
 
 # Un desconocido sufre un accidente en la calle: ¿seguir de largo o detenerse?
 

@@ -1,6 +1,6 @@
 > Unofficial English translation of [docs/遇到陌生人出事该不该停.md](../遇到陌生人出事该不该停.md). In case of discrepancies the Chinese original takes precedence.
 
-[← Back to the main table of contents](../../README.md)
+[← Back to the main table of contents](../../../README.md)
 
 # A stranger has an accident on the street: walk away or stop
 

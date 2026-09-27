@@ -129,7 +129,7 @@ def gate_parity(issues):
                 issues.append(f"[parity] ch.{nn} item counts differ: {counts}")
     # EN-primary: README.md → book/en/; ZH mirror → book/; RU → book/ru/
     readme_expect = {"README.md": "book/en/", "README.ru.md": "book/ru/", "README.zh.md": "book/"}
-    docs_expect = {"README.md": "docs/en/", "README.ru.md": "docs/ru/", "README.zh.md": "docs/"}
+    docs_expect = {"README.md": "docs/research/en/", "README.ru.md": "docs/research/ru/", "README.zh.md": "docs/research/"}
     for rf, prefix in readme_expect.items():
         text = open(os.path.join(ROOT, rf), encoding="utf-8").read()
         for nn in expected:

@@ -2,7 +2,7 @@
 
 English is the fork primary (`README.md`, `book/en/`, site default `/en/`). Chinese stays at upstream paths (`book/*.md`, `README.zh.md`). Every other locale follows this checklist.
 
-Locale registry: [`tools/langs.json`](../tools/langs.json). Upstream sync: [`docs/upstream-sync.md`](upstream-sync.md).
+Locale registry: [`tools/langs.json`](../../tools/langs.json). Upstream sync: [`docs/upstream-sync.md`](upstream-sync.md).
 
 ## Steps
 
@@ -15,9 +15,9 @@ Locale registry: [`tools/langs.json`](../tools/langs.json). Upstream sync: [`doc
    - `shortLabel` (nav chip), `menuLabel` (dropdown)
    - Order in the array = order in the language menu after the next build.
 
-2. **UI strings** — add `I18N.<code>:{ … }` in root [`index.html`](../index.html) (copy from `en:` / `ru:` and translate). Build fails loudly if the block is missing.
+2. **UI strings** — add `I18N.<code>:{ … }` in root [`index.html`](../../index.html) (copy from `en:` / `ru:` and translate). Build fails loudly if the block is missing.
 
-3. **Content** — create `book/<code>/` chapters (status line + localized slugs per [`TRANSLATION.md`](../TRANSLATION.md)) and `README.<code>.md`. Optionally `docs/<code>/` long reads.
+3. **Content** — create `book/<code>/` chapters (status line + localized slugs per [`TRANSLATION.md`](../../TRANSLATION.md)) and `README.<code>.md`. Optionally `docs/<code>/` long reads.
 
 4. **Build** — from repo root:
    ```bash

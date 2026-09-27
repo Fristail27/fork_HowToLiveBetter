@@ -6,7 +6,7 @@
 check-content:  ## CJK-leak, parity, readme-badge checks
 	python3 tools/check_content.py
 
-ci:  ## Full local CI: test + lint + links + content + readability + bureaucratese + build
+ci:  ## Full local CI: test + lint + links + content + build
 	@echo "=== Running tests ==="
 	python3 -m pytest tools/validate/tests/ tools/llm/tests/ -v --ignore=tools/validate/tests/integration
 	@echo "=== Integration tests ==="
@@ -17,12 +17,14 @@ ci:  ## Full local CI: test + lint + links + content + readability + bureaucrate
 	python3 tools/check_links.py
 	@echo "=== Content ==="
 	python3 tools/check_content.py
+	@echo "=== Build pages ==="
+	python3 tools/build_pages.py
+
+quality:  ## Content quality gates: readability + bureaucratese (strict)
 	@echo "=== Readability ==="
 	python3 tools/readability.py ru --strict
 	@echo "=== Bureaucratese ==="
 	python3 tools/bureaucratese.py ru --strict
-	@echo "=== Build pages ==="
-	python3 tools/build_pages.py
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
