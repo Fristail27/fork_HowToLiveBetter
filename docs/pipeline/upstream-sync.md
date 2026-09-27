@@ -30,6 +30,9 @@ git checkout upstream/main -- skills/
 
 # Chinese README → README.zh.md ONLY (never root README.md)
 git show upstream/main:README.md > README.zh.md
+python3 tools/strip_zh_readme_ads.py README.zh.md
+
+# Do NOT checkout ads/, site/, index.html, og.png, or tools/
 ```
 
 Review `git status` / `git diff --stat` before committing. Then:
@@ -115,25 +118,24 @@ meaningful "new upstream commits since last sync" indicator.
 
 These are fork-owned. A broad `git merge upstream/main` or `checkout upstream/main -- .` will damage the product (and after the 2026-09-23 history anchor it would no longer fail loudly — see above):
 
-- `README.md`, `README.ru.md` (and any `README.<lang>.md` except the explicit `README.zh.md` ritual above)
-- `index.html`
-- `og.png`, `og-en.png`, `og-ru.png`
-- `tools/v2.css`, `tools/build_pages.py`, `tools/langs.json`, `tools/check_content.py`
-- Generated pages: `en/`, `ru/`, `zh/`, `v1/`, `v2/`
+- `README.md`, `README.ru.md`, `README.es.md` (and any `README.<lang>.md` except the explicit `README.zh.md` ritual above)
+- Entire `site/` (UI, assets, OG PNGs, robots, sitemap)
+- `tools/v2.css`, `tools/og/`, `tools/build_pages.py`, `tools/pages_artifact.py`, `tools/langs.json`, `tools/check_content.py`, `tools/strip_zh_readme_ads.py`
 - `.github/workflows/`
-- `CLAUDE.md`, `TRANSLATION.md`, `sitemap.xml`
-- `docs/en/`, `docs/ru/`, `book/en/`, `book/ru/` (and future `book/<lang>/`)
+- `CLAUDE.md`, `TRANSLATION.md`, `AGENTS.md`
+- `docs/research/en/`, `docs/research/ru/`, `docs/research/es/`, `book/en/`, `book/ru/`, `book/es/`
+- **Never** restore `ads/` (upstream author promo — this fork does not ship it)
 
 ## ZH policy
 
 - `book/*.md` and root Chinese `docs/*.md` are a **live mirror** of upstream content.
-- Site may still soft-redirect bare zh browsers to the original Pages host (see root `index.html`).
-- Product default language is **English** (`/` → `/en/`).
+- Site may soft-redirect bare zh browsers to the original Pages host (see `site/index.html`).
+- Product default language is **English** (`/` → `/en/` via the router in `site/index.html`).
 
 ## Dry-run check
 
 Before committing a sync, confirm never-merge paths are absent from the staged set:
 
 ```bash
-git diff --cached --name-only | grep -E '^(README\.md|README\.ru\.md|index\.html|og|tools/(v2|build_pages|langs|check_content)|CLAUDE\.md|TRANSLATION\.md|sitemap\.xml|(en|ru|zh|v1|v2)/)' && echo 'FAIL: never-merge path staged' || echo 'ok'
+git diff --cached --name-only | grep -E '^(README\.md|README\.ru\.md|README\.es\.md|site/|ads/|tools/(v2|og|build_pages|pages_artifact|langs|check_content|strip_zh)|CLAUDE\.md|TRANSLATION\.md|AGENTS\.md)' && echo 'FAIL: never-merge path staged' || echo 'ok'
 ```

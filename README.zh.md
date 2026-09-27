@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="og-zh.png" alt="高性价比人生指南 —— 用最少的钱、时间和精力，换回最多的寿命、金钱和人身自由" width="820">
+<img src="site/assets/og/zh.png" alt="高性价比人生指南 —— 用最少的钱、时间和精力，换回最多的寿命、金钱和人身自由" width="820">
 
 # 高性价比人生指南
 
@@ -247,7 +247,7 @@ node tools/pdf/build.mjs                   # PDF，另需 pandoc ≥ 3.1 和 typ
 
 每节内条目按性价比从高到低排列。「不要早死」「不要浪费时间」这类节标题说的是这一节想防住的结果，条目本身要做还是别做，以条目标题为准。长文另见 [docs/research/家庭应急装备清单.md](docs/research/家庭应急装备清单.md)、[docs/research/做平台要办哪些证.md](docs/research/做平台要办哪些证.md)、[docs/research/结婚划不划算.md](docs/research/结婚划不划算.md) 、[docs/research/遇到陌生人出事该不该停.md](docs/research/遇到陌生人出事该不该停.md) 和 [docs/research/生物钟和夜班.md](docs/research/生物钟和夜班.md)。每条来源的核实过程记录在 [docs/核实记录](docs/research/核实记录/)。
 
-仓库根目录的 `index.html` 是在线检索页：按关键词、章节、证据等级和成本维度（花钱、花时间、要毅力）筛选条目，数据直接读本文件。在仓库设置里开启 GitHub Pages（Deploy from a branch，分支 main，目录 /）后即可访问。`tools/epub/` 是电子书生成脚本，`cd tools/epub && npm ci && npm run build` 在本地出一本 EPUB 到 `dist/`；GitHub Actions 在正文改动后自动跑同一个脚本并更新 Release。
+仓库里的 `site/index.html` 是在线检索页模板；`make web-build` 会生成 `site/{en,ru,es,zh}/`。数据来自根目录的 `README*.md` 与 `book/`（发布时复制进 Pages 产物，与站点平级）。GitHub Pages 通过 Actions 部署（`.github/workflows/pages.yml`）——在仓库 Settings → Pages 里把 Source 设为 **GitHub Actions**。本地预览：`make serve`，打开 http://127.0.0.1:8000/zh/。
 
 ## 正文
 
@@ -256,7 +256,3 @@ node tools/pdf/build.mjs                   # PDF，另需 pandoc ≥ 3.1 和 typ
 ## Star 走势
 
 [![Star History Chart](https://api.star-history.com/svg?repos=eternity4719/HowToLiveBetter&type=Date)](https://star-history.com/#eternity4719/HowToLiveBetter&Date)
-
-## 广告位
-
-<a href="https://4.mcyyy.com"><img src="ads/mcyyy.webp" alt="永恒世界 Minecraft 服务器，游戏地址 1.mcyyy.com" width="820"></a>

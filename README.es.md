@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="og-es.png" alt="HowToLiveBetter — cambia menos dinero, tiempo y esfuerzo por más vida, dinero y libertad personal" width="820">
+<img src="site/assets/og/es.png" alt="HowToLiveBetter — cambia menos dinero, tiempo y esfuerzo por más vida, dinero y libertad personal" width="820">
 
 # HowToLiveBetter: Guía de la vida al mejor precio — traducción española
 
@@ -217,7 +217,7 @@ The text tries to speak plainly, but citing research requires a few statistical 
 
 Items inside each section are ordered from highest to lowest value for money. Section titles like "Don't Die Early" or "Don't Waste Time" name the outcome the section tries to prevent; whether an item is a to-do or a don't is decided by the item title. Long reads: [Home emergency kit (long read)](docs/research/es/Home-Emergency-Kit.md), [What licenses a platform needs (long read)](docs/research/es/What-Licenses-A-Platform-Needs.md), [Is marriage worth it (long read)](docs/research/es/Is-Marriage-Worth-It.md), and [Should you stop to help a stranger (long read)](docs/research/es/Should-You-Stop-To-Help-A-Stranger.md). The verification trail for every cited source is in [docs/核实记录](docs/research/核实记录/).
 
-`index.html` in the repo root is the online search page: filter items by keyword, chapter, evidence grade, and cost dimensions (money, time, willpower); the data is read directly from this file. Enable GitHub Pages in the repo settings (Deploy from a branch, branch main, directory /) to access it.
+`site/index.html` is the online search page template; `make web-build` writes locale pages under `site/{en,ru,es,zh}/`. Data is read from root `README*.md` and `book/` (copied beside the site in the Pages artifact). GitHub Pages deploys via Actions (`.github/workflows/pages.yml`) — in repo Settings → Pages, set Source to **GitHub Actions**. Locally: `make serve` then open http://127.0.0.1:8000/es/.
 
 ## The book itself
 

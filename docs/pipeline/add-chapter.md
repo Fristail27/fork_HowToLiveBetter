@@ -85,7 +85,7 @@ If README chapter counts are wrong, regenerate:
 make update-readme --fix
 ```
 
-OG previews: regenerate `og-{lang}.png` from `og-{lang}.html` templates when chapter count changes:
+OG previews: regenerate `site/assets/og/{lang}.png` from `tools/og/{lang}.html` when chapter counts change:
 
 ```bash
 make og

@@ -63,10 +63,10 @@ def scan_chapters(lang_dir):
 
 
 def check_og_preview(lang):
-    """Check root-level og-{lang}.png exists."""
-    og_path = os.path.join(ROOT, f"og-{lang}.png")
+    """Check site/assets/og/{lang}.png exists."""
+    og_path = os.path.join(ROOT, "site", "assets", "og", f"{lang}.png")
     if not os.path.isfile(og_path):
-        return [(0, f"og-{lang}.png missing")]
+        return [(0, f"site/assets/og/{lang}.png missing")]
     return []
 
 

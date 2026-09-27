@@ -17,12 +17,27 @@ git checkout upstream/main -- $(git ls-tree -r --name-only upstream/main docs | 
 
 # Chinese README → README.zh.md ONLY (never root README.md)
 git show upstream/main:README.md > README.zh.md
+python3 tools/strip_zh_readme_ads.py README.zh.md
 
 python3 tools/check_content.py
 # if template/counts changed: python3 tools/build_pages.py
 ```
 
 After sync: diff new/changed `book/NN-*.md` and catch up each `book/<lang>/`.
+
+**Never** checkout from upstream: `ads/`, `site/`, `index.html`, `og.png`, `tools/`.
+
+## Layout
+
+| Path | Role |
+|---|---|
+| `book/NN-*.md` | CN source (upstream paths — frozen) |
+| `book/{en,ru,es}/` | translations |
+| `site/` | Pages UI (`index.html`, `{lang}/`, `assets/`) |
+| `tools/` | pipeline + `tools/og/*.html` screenshot sources |
+| `README*.md` | stay at repo root (GitHub UI + Pages artifact) |
+
+Local preview: `make serve` → http://127.0.0.1:8000/en/. Deploy: GitHub Actions (`.github/workflows/pages.yml`).
 
 ## Locales
 
@@ -32,7 +47,7 @@ After sync: diff new/changed `book/NN-*.md` and catch up each `book/<lang>/`.
 
 ## Never overwrite (fork-owned)
 
-`README.md`, `README.ru.md`, `index.html`, `og*`, `tools/v2*`, `tools/build_pages.py`, `tools/langs.json`, generated `en|ru|zh|v2/`, `.github/workflows/`, `CLAUDE.md`, `TRANSLATION.md`, `sitemap.xml`, `book/en|ru/`, `docs/en|ru/`.
+`README.md`, `README.ru.md`, `README.es.md`, entire `site/`, `tools/v2.css`, `tools/og/`, `tools/build_pages.py`, `tools/langs.json`, `tools/pages_artifact.py`, `.github/workflows/`, `CLAUDE.md`, `TRANSLATION.md`, `book/en|ru|es/`, `docs/research/en|ru|es/`. Never restore `ads/`.
 
 ## Pipeline (for AI agents)
 

@@ -4,7 +4,7 @@
 PY = .venv/bin/python3
 RUFF = .venv/bin/ruff
 
-.PHONY: help sync-upstream digest assemble verify verify-all wave status lint test test-integration ci og update-readme hooks check-commit-msg
+.PHONY: help sync-upstream digest assemble verify verify-all wave status lint test test-integration ci og update-readme hooks check-commit-msg pages-artifact serve web-build
 
 check-content:  ## CJK-leak, parity, readme-badge checks
 	$(PY) tools/check_content.py
@@ -22,6 +22,7 @@ ci:  ## Full local CI: test + lint + links + content + build
 	$(PY) tools/check_content.py
 	@echo "=== Build pages ==="
 	$(PY) tools/build_pages.py
+	@test -f site/en/index.html && test -f site/assets/v2.css
 
 hooks:  ## Install local git hooks (commit-msg style check)
 	git config core.hooksPath .githooks
@@ -43,13 +44,15 @@ help:  ## Show this help
 # ── Upstream sync ──────────────────────────────────────────────
 
 sync-upstream:  ## Fetch upstream CN changes (follow AGENTS.md ritual)
-	@echo "→ Follow docs/upstream-sync.md"
+	@echo "→ Follow docs/pipeline/upstream-sync.md"
 	git fetch upstream
 	git checkout upstream/main -- $$(git ls-tree -r --name-only upstream/main book | grep -E '^book/[0-9]{2}-.*\.md$$')
 	git checkout upstream/main -- $$(git ls-tree -r --name-only upstream/main docs | grep -E '^docs/[^/]+\.md$$' ; git ls-tree -r --name-only upstream/main docs/核实记录)
 	git show upstream/main:README.md > README.zh.md
+	$(PY) tools/strip_zh_readme_ads.py README.zh.md
 	$(PY) tools/check_content.py
 	@echo "→ Done. Review changes: git diff -- book/ README.zh.md"
+	@echo "→ Never checkout ads/, site/, or tools/ from upstream"
 
 # ── Digest ─────────────────────────────────────────────────────
 
@@ -93,17 +96,25 @@ status:  ## Show translation dashboard
 
 # ── Web ────────────────────────────────────────────────────────
 
-web-build:  ## Regenerate per-language pages
+web-build:  ## Regenerate site/{lang}/ pages from site/index.html
 	$(PY) tools/build_pages.py
 
-og:  ## Regenerate OG preview images from HTML templates
+og:  ## Regenerate OG PNGs from tools/og/*.html → site/assets/og/
+	@mkdir -p site/assets/og
 	@for lang in en ru es zh; do \
 		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
 			--headless --disable-gpu --hide-scrollbars \
 			--force-device-scale-factor=1 --window-size=1200,630 \
-			--screenshot=og-$$lang.png og-$$lang.html; \
-		echo "✓ og-$$lang.png"; \
+			--screenshot=site/assets/og/$$lang.png tools/og/$$lang.html; \
+		echo "✓ site/assets/og/$$lang.png"; \
 	done
+
+pages-artifact: web-build  ## Stage flat Pages tree in .publish/ (site + book + README*)
+	$(PY) tools/pages_artifact.py
+
+serve: pages-artifact  ## Local preview of the Pages artifact on :8000
+	@echo "→ http://127.0.0.1:8000/en/"
+	cd .publish && $(PY) -m http.server 8000
 
 # ── Quality ────────────────────────────────────────────────────
 

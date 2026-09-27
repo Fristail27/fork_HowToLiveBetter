@@ -52,3 +52,4 @@ venv/
 *.gguf
 
 .DS_Store
+.publish/

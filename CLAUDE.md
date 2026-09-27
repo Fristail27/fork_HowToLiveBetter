@@ -8,10 +8,10 @@ When the user asks to pull/sync/update from the original Chinese repo, **follow 
 
 1. `git fetch upstream` (remote: `https://github.com/eternity4719/HowToLiveBetter.git`)
 2. Path-filtered checkout of root `book/NN-*.md` and Chinese `docs/` only — **never** `git merge upstream/main`
-3. `git show upstream/main:README.md > README.zh.md` — **never** overwrite root `README.md`
-4. `python3 tools/check_content.py`; catch up `book/<lang>/` for changed chapters; `python3 tools/build_pages.py` if needed
+3. `git show upstream/main:README.md > README.zh.md` then `python3 tools/strip_zh_readme_ads.py README.zh.md` — **never** overwrite root `README.md`; **never** checkout `ads/` or `site/`
+4. `python3 tools/check_content.py`; catch up `book/<lang>/` for changed chapters; `python3 tools/build_pages.py` if needed (writes under `site/`)
 
-Locales: [tools/langs.json](tools/langs.json), [docs/pipeline/add-language.md](docs/pipeline/add-language.md).
+Locales: [tools/langs.json](tools/langs.json), [docs/pipeline/add-language.md](docs/pipeline/add-language.md). Site lives in `site/`; Pages deploy via Actions (not branch `/`).
 
 # 高性价比人生指南 · 项目规则
 
