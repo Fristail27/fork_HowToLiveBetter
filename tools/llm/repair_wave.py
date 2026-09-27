@@ -39,7 +39,7 @@ from tools.llm.verify_issues import (  # noqa: E402
     parse_verify_json,
 )
 
-DIRTY_UNIT_CAP = 8  # locked: ≤8 dirty units repaired per round
+DIRTY_UNIT_CAP = 8
 
 
 def _run(cmd: list, **kw) -> subprocess.CompletedProcess:
@@ -83,8 +83,6 @@ def translate_unit(nn: str, unit: str, lang: str, workdir: Path) -> int:
 def dry_locate(nn: str, lang: str, workdir: Path, assembled: Path) -> int:
     code, report = run_verify_json(nn, lang, assembled)
     if report.get("ok"):
-        # review H6: an empty map {} is indistinguishable from "located
-        # nothing" — when verify already passes, say so explicitly.
         print(json.dumps({"_verify_ok": True}, ensure_ascii=False))
         return 0
     located = locate_issues(
@@ -125,7 +123,7 @@ def main(argv: list[str] | None = None) -> int:
     if str(workdir).startswith(str(_ROOT / "tools" / "digest")):
         raise SystemExit("refusing workdir under tools/digest/")
 
-    prev_fail_keys = None  # Task 4: round-over-round regression detection
+    prev_fail_keys = None
     for round_no in range(1, args.max_rounds + 1):
         a = _run(assemble_cmd(nn, lang, workdir, assembled))
         if a.returncode != 0:
@@ -136,9 +134,6 @@ def main(argv: list[str] | None = None) -> int:
         if report.get("ok"):
             print(f"VERIFY_OK round={round_no}")
             return 0
-        # print-only regression signal (review A3/R2, minimal form): did this
-        # round INTRODUCE a fail (kind, value|stem) the previous round did not
-        # have? Human-monitored; no blocking, no ledger file (deferred).
         fail_keys = {(f.get("kind"), f.get("value") or f.get("stem"))
                      for f in report.get("fails", [])}
         if prev_fail_keys is not None:
@@ -186,15 +181,10 @@ def main(argv: list[str] | None = None) -> int:
                 rc = translate_unit(nn, unit, lang, workdir)
                 if rc != 0:
                     return 2
-                # Post-fallback assert (review R3): don't wait a full round to
-                # notice the fallback didn't fix the unit. Print-only for now —
-                # exit-code semantics are unchanged; the next verify --json
-                # re-surfaces the issue either way.
                 if tr_path.is_file() and issues_still_present(
                         tr_path.read_text(encoding="utf-8"), issues, lang):
                     print(f"round={round_no} POST-FALLBACK STILL DIRTY unit={unit}",
                           file=sys.stderr)
-        # else: loop back to assemble + verify
     print("EXHAUSTED")
     return 1
 

@@ -9,7 +9,6 @@ import os
 import re
 import time
 
-# Service placeholder lines injected by make_digest.py; never shown to judges.
 _SERVICE_LINE = re.compile(r"^§(?:TAG|SRC)§$")
 
 

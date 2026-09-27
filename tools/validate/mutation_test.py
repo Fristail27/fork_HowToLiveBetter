@@ -155,7 +155,7 @@ def validate_spec():
 
 def build_cases():
     """Materialise 60 verify-safe cases (mutants must PASS verify)."""
-    validate_spec()  # never trust the spec file blindly (review F6/#17)
+    validate_spec()
     with open(SPEC_PATH, encoding="utf-8") as f:
         spec = json.load(f)
     cases, skipped = [], []
@@ -177,7 +177,6 @@ def build_cases():
         nn, lang = c["target"]
         cases.append({"kind": "control", "target": [nn, lang],
                       "text": read_book(nn, lang)})
-    # run-artifact: post-filter census must be recorded, not implied (review F6)
     with open(os.path.join(RESULTS, "mutations_cases.json"), "w", encoding="utf-8") as f:
         json.dump({"n_mutants": sum(1 for c in cases if c["kind"] == "mutation"),
                    "n_controls": sum(1 for c in cases if c["kind"] == "control"),

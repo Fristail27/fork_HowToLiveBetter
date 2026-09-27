@@ -81,8 +81,6 @@ def readme_section(readme_path, lang):
         return None, 0, 0
     with open(readme_path, encoding="utf-8") as f:
         content = f.read()
-    # Find chapter list: lines with numbers followed by titles
-    # Pattern: "1. **Title**" or "01. Title" or "1. [Title](link)"
     return content, 0, len(content)
 
 
@@ -102,7 +100,6 @@ def check_readme(lang, chapters):
     content, _, _ = readme_section(readme_path, lang)
 
     issues = []
-    # Extract numbered entries from README
     entries = re.findall(r"^\s*(\d+)\.?\s+(.+)", content, re.MULTILINE)
     readme_ids = [int(n) for n, _ in entries]
     chapter_ids = [cid for cid, _, _, _ in chapters]

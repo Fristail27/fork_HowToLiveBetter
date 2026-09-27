@@ -72,7 +72,6 @@ open(out, "w", encoding="utf-8").write(
     ("\n".join(parts).rstrip() + "\n").replace("\n\n\n", "\n\n"),
 )
 
-# ---- integrity checks against the original -------------------------------
 src = [f for f in os.listdir(os.path.join(root, "book"))
        if re.match(rf"{n}-", f) and f.endswith(".md")][0]
 sl = open(os.path.join(root, "book", src), encoding="utf-8").read().splitlines()

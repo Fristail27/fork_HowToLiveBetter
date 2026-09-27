@@ -36,7 +36,7 @@ for ch in sorted(os.listdir(run)):
     worst = max(worst, age)
     if age > stall_min:
         problems.append(f"ch.{ch}: no writes for {age:.0f} min")
-    if len(have) < expect + 1:  # +1 for unit 00
+    if len(have) < expect + 1:
         problems.append(f"ch.{ch}: units {len(have)}/{expect + 1}")
 
 if not problems:

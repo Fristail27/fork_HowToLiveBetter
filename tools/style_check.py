@@ -24,7 +24,6 @@ from tools.pipeline import config as pconfig  # noqa: E402
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 MAX_PER_CATEGORY = 5
 
-# Plain-terms field labels (plain-terms promise), per language pack key.
 PLAIN_FIELD = {
     "ru": "Простыми словами",
     "en": "In plain terms",

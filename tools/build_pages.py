@@ -295,14 +295,12 @@ def main():
     if not STYLE_RE.search(src):
         sys.exit('root index.html: <style> block not found')
 
-    # Fail loud if I18N missing for any registered lang
     for code in codes:
         i18n_block(src, code)
 
     src = inject_root(src, langs, primary)
     write(INDEX_PATH, src)
 
-    # ---------- default = v2 editorial under /{lang}/ ----------
     for lang in codes:
         d = src.replace(
             tpl,
@@ -313,7 +311,6 @@ def main():
         d = apply_lang_head(d, src, meta[lang], lang + '/')
         write(os.path.join(ROOT, lang, 'index.html'), d)
 
-    # ---------- back-compat: /v2/{lang}/ → /{lang}/ ----------
     for lang in codes:
         hl = meta[lang]['htmlLang']
         html = '''<!doctype html>

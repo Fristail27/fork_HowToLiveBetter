@@ -32,7 +32,6 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CJK = re.compile(r'[\u4e00-\u9fff]')
 NN = re.compile(r'^(\d{2})-')
 SRC_LINE = re.compile(r'^\s*(?:-\s*)?(?:Sources?|Fuentes|Источник(?:и)?|来源)\s*[:：]')
-# RU docs keep the CN citation bullet format (CJK author first) — see TRANSLATION.md
 SRC_BULLET = re.compile(r'^\s*-\s*[\u4e00-\u9fff]')
 FENCE = re.compile(r"```.*?```|~~~.*?~~~", re.DOTALL)
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
@@ -40,23 +39,22 @@ INLINE_CODE = re.compile(r"`[^`\n]*`")
 PATHLIKE_LINK = re.compile(r"\[[^\]\n]*[/\\][^\]\n]*\.(?:md|png|html)\]\([^)]*\)")
 LINK_TARGET = re.compile(r"\]\([^)]*\)")
 BOOK_TITLE = re.compile(r"《[^》]*》")
-# ordered legal-CJK rules (applied before the generic PAREN)
-GLOSS_PAREN = re.compile(  # 面子 (mianzi — social face), 民法典 (), 彩礼 ()
+GLOSS_PAREN = re.compile(
     r"[\u4e00-\u9fff][\u4e00-\u9fff/0-9]{0,20}\s*[（(][^()（）]*[）)]")
-TERM_THEN_TITLE = re.compile(  # «термин»《Title》— quoted term directly before a title
+TERM_THEN_TITLE = re.compile(
     r"[\"«“][^\"»”]*[\"»”]\s*《")
-TITLE_IDIOM = re.compile(  # 关于适用《X》的解释 — CN citation names wrapping a 《title》
+TITLE_IDIOM = re.compile(
     r"[\u4e00-\u9fff][\u4e00-\u9fff0-9]{0,12}\s*《[^》]*》\s*[\u4e00-\u9fff][\u4e00-\u9fff0-9]{0,12}")
 FW_PAREN = re.compile(r"（[^（）]*）")
-DOC_NUM = re.compile(  # 国食药监办〔2010〕432 号, 最高法知民终 51 号 — official IDs
+DOC_NUM = re.compile(
     r"[\u4e00-\u9fff][\u4e00-\u9fff0-9]{0,20}\s*[〔[][^〕\]]{0,20}[〕\]]\s*[\u4e00-\u9fff0-9]{0,10}\s*号?"
     r"|[\u4e00-\u9fff][\u4e00-\u9fff]{1,15}\s*[（(]\d{4}[）)]\s*[\u4e00-\u9fff]{1,15}\s*\d{1,5}\s*号"
     r"|[\u4e00-\u9fff][\u4e00-\u9fff]{1,15}\s*\d{1,5}\s*号")
-DASH_GLOSS = re.compile(  # 网络直播营销 — livestream marketing / — маркетинг
+DASH_GLOSS = re.compile(
     r"[\u4e00-\u9fff][\u4e00-\u9fff0-9·／/]{0,20}\s*—\s*[A-Za-zА-Яа-яЁё]")
-EQ_GLOSS = re.compile(  # 出国/出境 = выезд из КНР
+EQ_GLOSS = re.compile(
     r"[\u4e00-\u9fff][\u4e00-\u9fff/]{0,15}\s*=\s*\S")
-QUOTED_TERM = re.compile(  # "定金", «全国基础版…建议清单» — referenced terms/titles in quotes
+QUOTED_TERM = re.compile(
     r"[\"«“][\u4e00-\u9fff][\u4e00-\u9fff0-9·—－\s（）():：]{0,60}[\"»”]")
 PAREN = re.compile(r"[（(][^（）()]*[）)]")
 
@@ -110,8 +108,6 @@ def gate_parity(issues):
                 counts[label] = len(
                     re.findall(r"^### ", open(files[0], encoding="utf-8").read(), re.M))
         if len(set(counts.values())) > 1:
-            # Retranslation in progress: chapters listed in the marker file are
-            # allowed to trail the CN original until their retranslate wave lands.
             marker = os.path.join(ROOT, "docs", ".retranslate-pending")
             pending = set()
             if os.path.exists(marker):
@@ -120,14 +116,9 @@ def gate_parity(issues):
             if nn in pending:
                 print(f"[parity] ch.{nn} item counts differ (retranslate pending): {counts}")
             elif "book/ru" in counts and counts.get("book") == counts.get("book/ru"):
-                # RU wave done: RU is in sync with the CN original. A count
-                # mismatch here means another language (en/es) trails the CN
-                # original until its own retranslate wave — advisory, not a
-                # blocker for this PR.
                 print(f"[parity] ch.{nn} item counts differ (non-RU trailing CN): {counts}")
             else:
                 issues.append(f"[parity] ch.{nn} item counts differ: {counts}")
-    # EN-primary: README.md → book/en/; ZH mirror → book/; RU → book/ru/
     readme_expect = {"README.md": "book/en/", "README.ru.md": "book/ru/", "README.zh.md": "book/"}
     docs_expect = {"README.md": "docs/research/en/", "README.ru.md": "docs/research/ru/", "README.zh.md": "docs/research/"}
     for rf, prefix in readme_expect.items():
@@ -220,8 +211,6 @@ def gate_stats(issues):
             if line.startswith(("- 来源：", "- 来源:", "- 备注：", "- 备注:")):
                 links += len(re.findall(r"https?://", line))
     computed = {"items": items, "A-grade": a_grade, "links": links}
-    # Retranslation in progress: README badges may trail the CN counts until
-    # every chapter of the pending list is retranslated.
     marker = os.path.join(ROOT, "docs", ".retranslate-pending")
     retranslate_pending = os.path.exists(marker) and any(
         ln.strip() and not ln.startswith("#") for ln in open(marker, encoding="utf-8"))

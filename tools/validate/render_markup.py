@@ -22,7 +22,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
 
-LINE_RATIO_FLOOR = 0.3  # below this a line pair is marked wholesale (too noisy)
+LINE_RATIO_FLOOR = 0.3
 
 
 def _words(line):
@@ -172,7 +172,7 @@ def main():
         first, second = (a, b) if p["show_order"] == "AB" else (b, a)
         if compact:
             rows = diff_line_pairs(first, second)
-            if not rows:  # decoy/identical pair
+            if not rows:
                 rows = [("<i>(варианты идентичны)</i>",
                          "<i>(варианты идентичны)</i>")]
             body1, body2 = [], []

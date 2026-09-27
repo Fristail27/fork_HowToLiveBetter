@@ -15,7 +15,6 @@ from tools.llm.client import LLMError, chat, repo_root  # noqa: E402
 
 LANGS = ("ru", "en", "es")
 
-# Exact list-field prefixes assemble / verify / index expect (locale book style).
 REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
     "ru": (
         "- Стоимость:",
@@ -123,7 +122,6 @@ def strip_mechanical_markers(text: str) -> str:
     for line in text.splitlines():
         if _MARKER_LINE.match(line.strip()):
             continue
-        # Model sometimes writes "§TAG§ something"
         s = line.strip()
         if s.startswith("§TAG§") or s.startswith("§SRC§"):
             continue

@@ -39,23 +39,16 @@ for ln in lines:
 d = os.path.join(root, "tools", "digest", n)
 os.makedirs(os.path.join(d, "units"), exist_ok=True)
 
-# unit 00 = chapter head (status line + title + intro) — translatable,
-# with the original-file link that must survive byte-identical
 open(os.path.join(d, "units", "00.md"), "w", encoding="utf-8").write(
     "\n".join(head).rstrip() + "\n")
 
-blocks = {}   # unit -> faithful lines, injected by assemble.py verbatim
+blocks = {}
 for i, it in enumerate(items, 1):
-    # unit file: only what the LLM translates; placeholders mark faithful zones
     unit = [it["title"], "§TAG§"] + it["body"] + ["§SRC§", ""]
     open(os.path.join(d, "units", f"{i:02d}.md"), "w", encoding="utf-8").write(
         "\n".join(unit))
     blocks[str(i)] = {"tag": it["tag"], "src": it["src"]}
 
-# Per-unit terminology injection: units/NN.gloss.md contains ONLY the glossary
-# terms occurring in this unit (00 gets the chapter-wide union + style rules).
-# assemble.py reads only NN.md, so gloss files never leak into the book; they
-# are copied together with units and pasted into the translator-subagent task.
 gloss_path = os.path.join(root, "tools", "glossary.json")
 gloss = json.load(open(gloss_path, encoding="utf-8")) if os.path.exists(gloss_path) \
     else {"terms": [], "style_rules": {}}
@@ -76,7 +69,7 @@ for i in range(len(items) + 1):
         it = items[i - 1]
         rows = gloss_rows(it["title"] + "\n" + "\n".join(it["body"]))
     style = []
-    if i == 0:  # style rules once, in the chapter-overview unit
+    if i == 0:
         for lang in ("ru", "en"):
             style += [f"[STYLE {lang.upper()}] " + r
                       for r in gloss.get("style_rules", {}).get(lang, [])]

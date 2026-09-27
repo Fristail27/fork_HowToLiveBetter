@@ -69,13 +69,13 @@ def summarize(results_dir=RESULTS):
     for recipe in {p["recipe"] for p in non_decoy}:
         per_recipe[recipe] = _rate([p for p in non_decoy if p["recipe"] == recipe], answers)
     pref = _rate(non_decoy, answers)
-    fp = _rate(decoys, answers)  # on decoys both variants identical -> any pick is FP
+    fp = _rate(decoys, answers)
     summary = {
         "native_preference": pref["rate"],
         "native_detail": pref,
         "decoy_fp_rate": fp["rate"],
         "decoy_detail": fp,
-        "tie_contrast": {  # review S9: ties on decoys vs ties on content pairs
+        "tie_contrast": {
             "decoy_ties": fp["ties"],
             "content_ties": pref["ties"],
         },

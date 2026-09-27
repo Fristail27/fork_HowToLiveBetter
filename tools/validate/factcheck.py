@@ -20,9 +20,8 @@ sys.path.insert(0, REPO)
 
 RESULTS = os.path.join(REPO, "tools", "validate", "results")
 PROMPT_PATH = os.path.join(REPO, "tools", "prompts", "judge-factcheck.md")
-JUDGE_DIR = os.path.join(REPO, "tools", "judge", "factcheck")  # transient (gitignored)
+JUDGE_DIR = os.path.join(REPO, "tools", "judge", "factcheck")
 
-# plan Task 8: major classes fail the chapter gate (after verify.py, before style/QE)
 MAJOR_ISSUE_TYPES = ("reversed_logic", "invented", "dropped_condition",
                      "hardened_claim")
 
@@ -204,8 +203,6 @@ def check_grounding(verdict, cn_text):
         if service:
             dropped.append({"assertion": a, "reason": "service_line"})
             continue
-        # final gate: every grounded fragment must survive inside the
-        # filtered body (ellipsis spans are checked fragment-wise)
         nbody = _norm(cn_body(cn_text))
         if not all(f in cn_body(cn_text) or _norm(f) in nbody for f in fragments):
             dropped.append({"assertion": a, "reason": "span_not_found"})
@@ -220,8 +217,6 @@ def _line_of_collapsed(cn_text, collapsed_pos):
     for i, ch in enumerate(cn_text):
         if not ch.isspace():
             if seen == collapsed_pos:
-                # the collapsed offset lands exactly on this char: the span
-                # STARTS here, so it lives on the line containing i
                 return cn_text.rfind("\n", 0, i) + 1
             seen += 1
     return 0
@@ -243,7 +238,6 @@ def gate_major(verdict):
     """
     assertions, usable = normalize_assertions(verdict)
     if not usable:
-        # broken judge output must not read as "clean chapter"
         return {"gate": "error", "major": [], "minor": [],
                 "error": "unparseable or missing assertions"}
     findings = assertions

@@ -8,23 +8,23 @@ check-content:  ## CJK-leak, parity, readme-badge checks
 
 ci:  ## Full local CI: test + lint + links + content + build
 	@echo "=== Running tests ==="
-	python3 -m pytest tools/validate/tests/ tools/llm/tests/ -v --ignore=tools/validate/tests/integration
+	.venv/bin/python3 -m pytest tools/validate/tests/ tools/llm/tests/ -v --ignore=tools/validate/tests/integration
 	@echo "=== Integration tests ==="
-	python3 -m pytest tools/validate/tests/integration/ -v
+	.venv/bin/python3 -m pytest tools/validate/tests/integration/ -v
 	@echo "=== Lint ==="
-	ruff check tools/ --select E,F --ignore E501
+	.venv/bin/ruff check tools/ --select E,F --ignore E501
 	@echo "=== Links ==="
-	python3 tools/check_links.py
+	.venv/bin/python3 tools/check_links.py
 	@echo "=== Content ==="
-	python3 tools/check_content.py
+	.venv/bin/python3 tools/check_content.py
 	@echo "=== Build pages ==="
-	python3 tools/build_pages.py
+	.venv/bin/python3 tools/build_pages.py
 
 quality:  ## Content quality gates: readability + bureaucratese (strict)
 	@echo "=== Readability ==="
-	python3 tools/readability.py ru --strict
+	.venv/bin/python3 tools/readability.py ru --strict
 	@echo "=== Bureaucratese ==="
-	python3 tools/bureaucratese.py ru --strict
+	.venv/bin/python3 tools/bureaucratese.py ru --strict
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

@@ -47,7 +47,6 @@ def count_syllables_en(word):
             prev_vowel = True
         else:
             prev_vowel = False
-    # Silent -e
     if word.endswith("e") and count > 1:
         count -= 1
     return max(count, 1)
@@ -73,7 +72,6 @@ def count_syllables_es(word):
 
 def split_sentences(text):
     """Split text into sentences (language-agnostic)."""
-    # Split on .!? followed by space + capital, or newline
     sentences = re.split(r'(?<=[.!?])\s+(?=[A-ZА-ЯЁ])', text)
     return [s.strip() for s in sentences if len(s.strip().split()) >= 3]
 
@@ -94,10 +92,9 @@ def flesch_ru(text):
     n_words = len(words)
     n_syllables = sum(count_syllables_ru(w) for w in words)
 
-    asl = n_words / n_sents  # average sentence length
-    asw = n_syllables / n_words  # average syllables per word
+    asl = n_words / n_sents
+    asw = n_syllables / n_words
 
-    # Flesch-Kincaid adapted for Russian
     score = 206.835 - (1.3 * asl) - (60.1 * asw)
     score = max(0, min(100, score))
 

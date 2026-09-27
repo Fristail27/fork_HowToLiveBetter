@@ -26,7 +26,6 @@ FILLER_EN = ("It is worth stressing that this procedure applies at all times and
              "described settles most of the typical questions that arise in such "
              "situations.")
 
-# pair_id -> list of (old, new) surgical inversions; language derived from manifest
 EDITS = {
     "g23": [
         ("и 96110 — именно эта единая по стране линия, её звонки надо брать",
@@ -201,9 +200,6 @@ def main():
         else:
             b = pad(b, len(a), p["lang"])
             probs = check({"variant_b": b, "lang": p["lang"]}, a, "bloat")
-            # whitelist leak markers that already exist in the ORIGINAL
-            # (e.g. g23 notes carry a literal "TODO" from the book chapter);
-            # only markers we introduced are real failures
             probs = [pr for pr in probs
                      if not (pr == "meta/leak words present"
                              and any(x in a.lower() for x in ("todo", "lorem")))]

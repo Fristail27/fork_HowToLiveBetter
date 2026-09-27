@@ -101,8 +101,6 @@ def main():
                           "_degraded": op.get("notes", "degraded")}
 
     os.makedirs(args.out, exist_ok=True)
-    # single-writer guard: two concurrent runs into one outdir race on the
-    # per-call files (seen in practice) — second run aborts immediately
     lock_path = os.path.join(args.out, ".lock")
     lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR)
     try:
@@ -122,7 +120,6 @@ def main():
                     prev = json.load(open(path, encoding="utf-8"))
                 except (json.JSONDecodeError, OSError):
                     prev = None
-                # a valid completed call has a decode; error files are retried
                 done = bool(prev) and "error" not in prev and "decoded" in prev
             if not done:
                 jobs.append((pid, order, path))
@@ -139,7 +136,7 @@ def main():
             try:
                 reply = call_judge(cfg, api_key, rendered)
                 break
-            except Exception as e:  # transient network/API errors
+            except Exception as e:
                 if attempt == 2:
                     result = {"error": f"{type(e).__name__}: {e}"[:300]}
                     json.dump(result, open(path, "w", encoding="utf-8"))
@@ -159,14 +156,12 @@ def main():
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         list(ex.map(work, jobs))
 
-    # ---- aggregate ----
     rows = []
     for pid in subset["ids"]:
         for order in ("AB", "BA"):
             path = os.path.join(args.out, f"{pid}_{order}.json")
             if os.path.exists(path):
                 r = json.load(open(path, encoding="utf-8"))
-                # failed-call files carry only {"error": ...}
                 r.setdefault("decoded", "unparsed")
                 r.setdefault("pair_id", pid)
                 r.setdefault("order", order)

@@ -47,9 +47,6 @@ DEGRADE_RECIPES = [
 ]
 
 CLEAN_GREEN = set(GREEN_CHAPTERS)
-# 42 decoys: 18 real (abridgement+bloat lite2 set) + 42 identical twins.
-# With N=42 zero FP bounds judge FP rate at <=0.071 (95% one-sided,
-# rule of three): decoy gate becomes decisive for the kappa-gate decision.
 DECOY_TARGET = 42
 
 
@@ -98,7 +95,6 @@ def select_pairs(root=REPO):
             "show_order": "BA" if rng.random() < 0.5 else "AB",
         })
 
-    # anchors: 6 chapters x 3 strata x 2 langs = 36
     seen_excerpts = set()
 
     def excerpt_key(excerpt):
@@ -113,9 +109,8 @@ def select_pairs(root=REPO):
             for excerpt, stratum in zip(chosen, ("short", "medium", "long")):
                 add(nn, lang, excerpt, stratum, decoy=False)
                 seen_excerpts.add(excerpt_key(excerpt))
-    # fresh random pairs to reach 60 total, topped up to DECOY_TARGET decoys
     need = 60 - len(pairs)
-    fresh_decoy_slots = set(rng.sample(range(need), min(DECOY_TARGET, need)))  # relative indices
+    fresh_decoy_slots = set(rng.sample(range(need), min(DECOY_TARGET, need)))
     placed, guard = 0, 0
     while placed < need and guard < 1000:
         guard += 1
@@ -125,11 +120,10 @@ def select_pairs(root=REPO):
             continue
         excerpt = rng.choice(pool)
         if not fresh_decoy_slots and excerpt_key(excerpt) in seen_excerpts:
-            continue  # global excerpt dedupe (F11: duplicates break κ independence)
+            continue
         add(nn, lang, excerpt, "fresh", decoy=placed in fresh_decoy_slots)
         seen_excerpts.add(excerpt_key(excerpt))
         placed += 1
-    # top up decoys from anchors when DECOY_TARGET exceeds fresh slots (F3)
     fresh_decoys = sum(1 for p in pairs if p["decoy"])
     if fresh_decoys < DECOY_TARGET:
         anchor_ids = [p["id"] for p in pairs

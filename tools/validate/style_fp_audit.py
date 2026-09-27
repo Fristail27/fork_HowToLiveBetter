@@ -26,7 +26,7 @@ RESULTS = os.path.join(REPO, "tools", "validate", "results")
 SESSION = os.path.join(RESULTS, "style_fp_session.json")
 LABELS = os.path.join(RESULTS, "style_fp_labels.json")
 SEED = 42
-KNOWN_BAD_PATTERNS = ["когорт", "популяц"]  # calque history (verify.py findings)
+KNOWN_BAD_PATTERNS = ["когорт", "популяц"]
 
 
 def collect_fragments(lang="ru"):
@@ -35,7 +35,7 @@ def collect_fragments(lang="ru"):
     for path in sorted(glob.glob(os.path.join(REPO, "book", lang, "*.md"))):
         rel = os.path.basename(path)
         for i, line in enumerate(open(path, encoding="utf-8").read().splitlines(), 1):
-            if len(line.strip()) >= 30:  # meaningful fragments only
+            if len(line.strip()) >= 30:
                 frags.append({"file": rel, "line_no": i, "text": line})
     return frags
 
@@ -68,7 +68,6 @@ def report():
         return {"status": "pending", "reason": "labels not yet marked (Task 11)"}
     session = json.load(open(SESSION, encoding="utf-8"))
     labels = json.load(open(LABELS, encoding="utf-8"))
-    # labels: {"warned": {idx: true|false}, "clean": {idx: false-positives...}, "known_bad": {idx: caught?}}
     per_rule_tp, per_rule_fp = {}, {}
     for idx, f in enumerate(session["warned"]):
         hits = check_text(f["text"], session["lang"])
@@ -83,7 +82,7 @@ def report():
         tp, fp = per_rule_tp.get(label, 0), per_rule_fp.get(label, 0)
         precision = tp / (tp + fp) if tp + fp else None
         rules[label] = {"tp": tp, "fp": fp, "precision": round(precision, 3) if precision is not None else None,
-                        "dropped": bool(precision is not None and precision < 0.6)}  # FP>40%
+                        "dropped": bool(precision is not None and precision < 0.6)}
     kb = session["known_bad"]
     caught = sum(1 for idx, f in enumerate(kb)
                  if check_text(f["text"], session["lang"]) or labels.get("known_bad", {}).get(str(idx), False))

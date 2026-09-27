@@ -39,7 +39,7 @@ def cohens_kappa(a, b):
     pe = sum((sum(1 for x in a if x == ln) / n) * (sum(1 for y in b if y == ln) / n)
              for ln in levels)
     if pe == 1.0:
-        return None  # undefined: unanimous marginals (prevalence paradox)
+        return None
     return (po - pe) / (1 - pe)
 
 
@@ -103,7 +103,6 @@ def main():
     labels = json.load(open(args.labels, encoding="utf-8"))
     verdicts = json.load(open(args.verdicts, encoding="utf-8"))
 
-    # A/B-against-degradation: score judge answers against known ground truth
     def decode(session, marks):
         """marks (1|2|0 tie) -> 1 if 'native variant chosen' else 0 (ties excluded)."""
         if len(marks) != len(session["pairs"]):
@@ -113,7 +112,7 @@ def main():
         for p, m in zip(session["pairs"], marks):
             if m in (None, 0, "="):
                 continue
-            native_shown_first = (p["show_order"] == "AB")  # A is native
+            native_shown_first = (p["show_order"] == "AB")
             chosen_first = (m == 1)
             chose_native = chosen_first if native_shown_first else not chosen_first
             out.append(1 if chose_native else 0)
@@ -123,8 +122,6 @@ def main():
     degraded_scored = decode({"pairs": manifest["pairs"]}, verdicts.get("degraded", []))
     nr = nativeness_rate({"native": native_scored, "degraded": degraded_scored})
 
-    # kappa: judge vs Лёня on the same pair preferences (first run only).
-    # Dimension: 3-category marks (1/2/=), ties included — documented policy.
     k = None
     kappa_note = None
     if labels.get("marks") and verdicts.get("first"):

@@ -37,7 +37,6 @@ WHICH_RE = {
 ABBREV_RE = re.compile(r"\b[A-ZА-ЯЁ]{2,}\b", re.UNICODE)
 EXPLAIN_RE = re.compile(r"\(\s*[^)]{3,60}\s*\)")
 
-# abbreviations every adult reader is expected to know / context-free
 DEFAULT_OK = {
     "ru": {"РФ", "СНГ", "ВОЗ", "СМС", "ЛОР", "УЗИ", "МРТ", "КТ", "ЭКГ", "ЭЭГ",
            "ДНД", "ГИА", "ЕГЭ", "ДТП", "СИЗ", "ФАП", "ОМС"},
@@ -45,7 +44,6 @@ DEFAULT_OK = {
            "ER", "ICU", "AED", "OTC", "BP"},
 }
 
-# unit field that carries the plainness promise, per language
 PLAIN_FIELD = {"ru": "Простыми словами", "en": "In plain terms", "cn": "说人话"}
 
 

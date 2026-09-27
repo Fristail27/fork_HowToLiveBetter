@@ -80,7 +80,6 @@ def check(pair, orig, recipe):
     ratio = len(b) / max(1, len(orig))
     if not (lo <= ratio <= hi):
         problems.append(f"length ratio {ratio:.2f} outside [{lo}, {hi}]")
-    # field labels preserved (same bullet labels as original)
     o_labels = {ln.split(":")[0] for ln in orig.split("\n")
                 if ln.strip().startswith("- ") and ":" in ln}
     b_labels = {ln.split(":")[0] for ln in b.split("\n")

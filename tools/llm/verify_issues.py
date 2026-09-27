@@ -94,36 +94,18 @@ def locate_issues(
             continue
         if kind == "number_absent":
             value = str(fail["value"])
-            # Counter diff (same semantics as verify.py's Counter-subtraction
-            # counting): a unit is dirty when ITS OWN cn count exceeds its tr
-            # count — a partially-fixed duplicate («61万» ×2 in CN, «610 000»
-            # ×1 in TR) is a real per-unit deficit and must not be swallowed
-            # by set-membership checks (review A1 false-UNLOCATED bug).
             matched = [u for u in digest_units
                        if cn_counters[u][value] > tr_counters.get(u, Counter())[value]]
             if not matched and not any(c[value] for c in tr_counters.values()):
-                # real chapter-wide absence: repair every CN unit containing
-                # the value (TR may hold a wrong-scale sibling in each)
                 matched = [u for u in digest_units if cn_counters[u][value]]
             if not matched and not any(c[value] for c in tr_counters.values()):
-                # value absent chapter-wide and no CN unit maps it → unlocatable
                 located.setdefault("_unlocated", []).append(fail)
             for u in matched:
-                # cn_context is attached PER UNIT on a copy — the shared fail
-                # dict must stay unmutated: different units can map the same
-                # value to different CN lines (and repair_unit's prompt needs
-                # the line from ITS unit, not another unit's).
                 enriched = dict(fail,
                                 cn_context=_cn_context_for_value(cn_texts[u], value))
                 located.setdefault(u, []).append(enriched)
-        else:  # banned_calque
+        else:
             stem = fail["stem"]
-            # attach only to units whose OWN tr text carries the stem more
-            # than once (that unit is itself an offender); a unit with a
-            # single occurrence is at most a legit first-use gloss (F7
-            # calque over-attach). Chapter-wide fallback to any unit
-            # containing the stem only when the fail came in with count > 1
-            # and no unit exceeds 1 (stem spread across units).
             hits = [u for u in tr_units
                     if len(re.findall(stem, tr_texts[u], re.I)) > 1]
             if not hits and int(fail.get("count", 0) or 0) > 1:

@@ -39,7 +39,6 @@ def main():
         lang_dir = f"book/{lang}"
         n_ch = count_chapters(lang_dir)
 
-        # readability
         rc, out = run(f"python3 tools/readability.py {lang} --json")
         readability = {"score": "N/A", "below_target": 0}
         if rc == 0 and out.strip():
@@ -54,7 +53,6 @@ def main():
         if readability["below_target"] > 0:
             issues += 1
 
-        # bureaucratese
         rc, out = run(f"python3 tools/bureaucratese.py {lang} --json")
         bur_hits = 0
         if out.strip():
@@ -63,11 +61,10 @@ def main():
                 bur_hits = sum(len(v) for v in data.values())
             except json.JSONDecodeError:
                 if rc != 0:
-                    bur_hits = 1  # parse failed but tool found issues
+                    bur_hits = 1
         if bur_hits > 0:
             issues += 1
 
-        # OG previews
         og_dir = os.path.join(ROOT, "og", lang)
         og_ok = n_ch
         og_missing = 0
@@ -76,7 +73,6 @@ def main():
                                      if f.endswith(".png")])
             og_ok = n_ch - og_missing
 
-        # README files
         readme_files = {
             "ru": "README.ru.md",
             "en": "README.md",
@@ -98,7 +94,6 @@ def main():
             "readme": rm_ok,
         })
 
-    # Print table
     header = f"{'Lang':>6} {'Ch':>3} {'Read':>5} {'<60':>4} {'Bur':>5} {'OG':>8} {'README':>8}"
     sep = "-" * len(header)
     print(sep)
@@ -111,14 +106,12 @@ def main():
               f"{r['below60']:>4} {bur_flag:>5} {r['og']:>8} {readme_flag:>8}")
     print(sep)
 
-    # Summarize
     total_ch = sum(r["chapters"] for r in rows)
     total_below = sum(r["below60"] for r in rows)
     print(f"\n{total_ch} chapters × {len(langs)} languages")
     print(f"Readability target (≥60): {total_ch * len(langs) - total_below}/{total_ch * len(langs)} pass "
           f"({total_below} below)")
 
-    # Test check
     rc, out = run("python3 -m pytest tools/validate/tests/ tools/llm/tests/ --tb=no -q")
     tests_ok = rc == 0
     if tests_ok:
@@ -131,7 +124,6 @@ def main():
         print(f"Tests: {passed}")
     else:
         issues += 1
-        # Extract failure summary
         for line in out.splitlines():
             if "failed" in line:
                 print(f"Tests: {line.strip()}")
