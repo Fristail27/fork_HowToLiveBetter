@@ -31,6 +31,9 @@ tools/validate/results/_ru_work/
 tools/validate/results/_golden_b_*.json
 tools/validate/results/golden_session/
 tools/validate/results/golden_verdicts_batch*.json
+tools/validate/results/golden_judge_run_lite*/
+tools/validate/results/_lite2_work_bloat/
+tools/validate/results/_lite*_degrade_*.json
 tools/validate/results/factcheck/
 tools/validate/results/style_fp_session*.json
 
