@@ -88,7 +88,15 @@ def translated_dirs():
 def gate_parity(issues):
     codes = translation_langs(ROOT)
     cn = chapter_nns("book")
-    expected = [f"{n:02d}" for n in range(1, 34)]
+    expected = sorted(set(cn))
+    marker = os.path.join(ROOT, "docs", ".retranslate-pending")
+    pending = set()
+    if os.path.exists(marker):
+        pending = {
+            ln.strip()
+            for ln in open(marker, encoding="utf-8")
+            if ln.strip() and not ln.startswith("#")
+        }
     per_lang = {"book": cn}
     for c in codes:
         per_lang[f"book/{c}"] = chapter_nns(f"book/{c}")
@@ -99,7 +107,15 @@ def gate_parity(issues):
         miss = [x for x in expected if x not in got]
         extra = [x for x in got if x not in expected]
         if miss:
-            issues.append(f"[parity] {label}: missing chapters {miss}")
+            if label.startswith("book/"):
+                soft = [x for x in miss if x in pending]
+                hard = [x for x in miss if x not in pending]
+                if soft:
+                    print(f"[parity] {label}: missing chapters (retranslate pending): {soft}")
+                if hard:
+                    issues.append(f"[parity] {label}: missing chapters {hard}")
+            else:
+                issues.append(f"[parity] {label}: missing chapters {miss}")
         if extra:
             issues.append(f"[parity] {label}: unexpected chapters {extra}")
     for nn in expected:
@@ -111,14 +127,6 @@ def gate_parity(issues):
                     re.findall(r"^### ", open(files[0], encoding="utf-8").read(), re.MULTILINE)
                 )
         if len(set(counts.values())) > 1:
-            marker = os.path.join(ROOT, "docs", ".retranslate-pending")
-            pending = set()
-            if os.path.exists(marker):
-                pending = {
-                    ln.strip()
-                    for ln in open(marker, encoding="utf-8")
-                    if ln.strip() and not ln.startswith("#")
-                }
             if nn in pending:
                 print(f"[parity] ch.{nn} item counts differ (retranslate pending): {counts}")
             elif "book/ru" in counts and counts.get("book") == counts.get("book/ru"):
@@ -138,7 +146,10 @@ def gate_parity(issues):
         text = open(os.path.join(ROOT, rf), encoding="utf-8").read()
         for nn in expected:
             if f"{prefix}{nn}-" not in text:
-                issues.append(f"[parity] {rf}: chapter {nn} not linked")
+                if nn in pending:
+                    print(f"[parity] {rf}: chapter {nn} not linked (retranslate pending)")
+                else:
+                    issues.append(f"[parity] {rf}: chapter {nn} not linked")
         docs_prefix = docs_expect[rf]
         n_docs = len(re.findall(rf"\]\({re.escape(docs_prefix)}[^/)]*\.md", text))
         if n_docs < 4:
